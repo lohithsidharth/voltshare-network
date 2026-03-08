@@ -66,7 +66,7 @@ async function fetchVoltShareChargers(search?: string, powerFilter?: string, lat
 
 async function fetchOSMChargers(lat: number, lng: number, radiusM: number): Promise<Charger[]> {
   const { data, error } = await supabase.functions.invoke("overpass-chargers", {
-    body: { lat, lng, radius: radiusM },
+    body: { lat, lng, radius: Math.min(radiusM, 5000) },
   });
 
   if (error || !data?.chargers) return [];
