@@ -132,7 +132,7 @@ const Auth = () => {
     
   };
 
-  const RoleSelector = () => (
+  const roleSelector = (
     <div>
       <Label className="mb-2 block">I want to...</Label>
       <div className="grid grid-cols-2 gap-3">
@@ -162,7 +162,7 @@ const Auth = () => {
     </div>
   );
 
-  const PhoneOTPFlow = () => (
+  const phoneOTPFlow = (
     <div className="space-y-4">
       {!otpSent ? (
         <>
@@ -183,7 +183,7 @@ const Auth = () => {
             />
             <p className="text-xs text-muted-foreground mt-1">Include country code (e.g. +91 for India)</p>
           </div>
-          {tab === "signup" && <RoleSelector />}
+          {tab === "signup" && roleSelector}
           <Button className="w-full" onClick={handleSendOTP} disabled={loading}>
             {loading ? "Sending OTP..." : "Send OTP"}
           </Button>
@@ -281,7 +281,7 @@ const Auth = () => {
                   </Button>
                 </form>
               ) : (
-                <PhoneOTPFlow />
+                phoneOTPFlow
               )}
             </TabsContent>
 
@@ -300,13 +300,13 @@ const Auth = () => {
                     <Label>Password</Label>
                     <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="mt-1" placeholder="Min 6 characters" />
                   </div>
-                  <RoleSelector />
+                  {roleSelector}
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
               ) : (
-                <PhoneOTPFlow />
+                phoneOTPFlow
               )}
             </TabsContent>
           </Tabs>
