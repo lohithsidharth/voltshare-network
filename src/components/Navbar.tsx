@@ -1,18 +1,26 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, Menu, X } from "lucide-react";
+import { Zap, Menu, X, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, role, profile, signOut } = useAuth();
 
   const links = [
     { to: "/", label: "Home" },
     { to: "/explore", label: "Explore" },
-    { to: "/driver", label: "Driver" },
-    { to: "/host", label: "Host" },
+    ...(role === "driver" ? [{ to: "/driver", label: "Dashboard" }] : []),
+    ...(role === "host" ? [{ to: "/host", label: "Dashboard" }] : []),
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
@@ -26,7 +34,6 @@ const Navbar = () => {
           </span>
         </Link>
 
-        {/* Desktop */}
         <div className="hidden md:flex items-center gap-1">
           {links.map((l) => (
             <Link
@@ -44,35 +51,49 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="sm">Sign In</Button>
-          <Button size="sm" className="glow-primary">Get Started</Button>
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <User className="w-4 h-4" />
+                {profile?.display_name || user.email}
+              </span>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-1" /> Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/auth">Sign In</Link>
+              </Button>
+              <Button size="sm" className="glow-primary" asChild>
+                <Link to="/auth">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          className="md:hidden text-foreground"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
+        <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden glass border-t border-border px-4 pb-4">
           {links.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              onClick={() => setMobileOpen(false)}
-              className="block py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
+            <Link key={l.to} to={l.to} onClick={() => setMobileOpen(false)} className="block py-3 text-sm font-medium text-muted-foreground hover:text-foreground">
               {l.label}
             </Link>
           ))}
           <div className="flex gap-2 pt-3">
-            <Button variant="ghost" size="sm" className="flex-1">Sign In</Button>
-            <Button size="sm" className="flex-1">Get Started</Button>
+            {user ? (
+              <Button variant="ghost" size="sm" className="flex-1" onClick={handleSignOut}>Sign Out</Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" className="flex-1" asChild><Link to="/auth">Sign In</Link></Button>
+                <Button size="sm" className="flex-1" asChild><Link to="/auth">Get Started</Link></Button>
+              </>
+            )}
           </div>
         </div>
       )}
