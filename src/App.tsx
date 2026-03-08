@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
+import TripPlanner from "./pages/TripPlanner";
 import DriverDashboard from "./pages/DriverDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import Auth from "./pages/Auth";
