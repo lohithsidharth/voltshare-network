@@ -12,8 +12,9 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import {
   Zap, MapPin, Star, Calendar as CalendarIcon, Clock, IndianRupee,
-  Car, Shield, Navigation, Loader2, Lock, ChevronRight,
+  Car, Shield, Navigation, Loader2, Lock, Battery, Plug, Heart,
 } from "lucide-react";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface ChargerDetail {
   id: string;
@@ -54,6 +55,7 @@ const ChargerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [charger, setCharger] = useState<ChargerDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,8 +65,6 @@ const ChargerDetailPage = () => {
   const [booking, setBooking] = useState(false);
   const [accessCode, setAccessCode] = useState<string | null>(null);
   const [existingBookings, setExistingBookings] = useState<string[]>([]);
-
-  // Review form
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -72,14 +72,13 @@ const ChargerDetailPage = () => {
 
   useEffect(() => {
     if (!id) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       setLoading(true);
       const [{ data: c }, { data: r }] = await Promise.all([
         supabase.from("chargers").select("*").eq("id", id).single(),
         supabase.from("reviews").select("id, rating, comment, created_at, driver_id").eq("charger_id", id).order("created_at", { ascending: false }),
       ]);
       setCharger(c as any);
-      // Fetch profiles for reviews
       if (r && r.length > 0) {
         const driverIds = [...new Set(r.map(rv => rv.driver_id))];
         const { data: profiles } = await supabase.from("profiles").select("user_id, display_name").in("user_id", driverIds);
@@ -90,10 +89,9 @@ const ChargerDetailPage = () => {
       }
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [id]);
 
-  // Fetch existing bookings for the selected date
   useEffect(() => {
     if (!id || !date) return;
     const fetchBookings = async () => {
@@ -121,9 +119,7 @@ const ChargerDetailPage = () => {
     if (!charger || !startSlot || !endSlot) return 0;
     const startHour = parseInt(startSlot.split(":")[0]);
     const endHour = parseInt(endSlot.split(":")[0]);
-    const hours = endHour - startHour;
-    if (hours <= 0) return 0;
-    // Dynamic pricing: peak 6pm-10pm
+    if (endHour <= startHour) return 0;
     let total = 0;
     for (let h = startHour; h < endHour; h++) {
       const isPeak = h >= 18 && h < 22;
@@ -153,10 +149,13 @@ const ChargerDetailPage = () => {
     }).select("id").single();
 
     if (error) {
-      toast.error("Booking failed: " + error.message);
+      if (error.message.includes("just booked")) {
+        toast.error("This slot was just booked. Try another time.");
+      } else {
+        toast.error("Booking failed: " + error.message);
+      }
     } else {
       toast.success("Booking confirmed!");
-      // Fetch access code
       setTimeout(async () => {
         const { data: ac } = await supabase
           .from("access_codes")
@@ -184,7 +183,6 @@ const ChargerDetailPage = () => {
       toast.success("Review submitted!");
       setShowReviewForm(false);
       setReviewComment("");
-      // Refresh reviews
       const { data: r } = await supabase.from("reviews").select("id, rating, comment, created_at, driver_id").eq("charger_id", charger.id).order("created_at", { ascending: false });
       if (r) {
         const driverIds = [...new Set(r.map(rv => rv.driver_id))];
@@ -192,7 +190,6 @@ const ChargerDetailPage = () => {
         const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
         setReviews(r.map(rv => ({ ...rv, profile: profileMap.get(rv.driver_id) || { display_name: null } })));
       }
-      // Update charger rating
       const avgRating = r ? (r.reduce((sum, rv) => sum + rv.rating, 0) / r.length) : 0;
       await supabase.from("chargers").update({ rating: Math.round(avgRating * 10) / 10, review_count: r?.length || 0 }).eq("id", charger.id);
     }
@@ -202,7 +199,10 @@ const ChargerDetailPage = () => {
   if (loading) {
     return (
       <div className="pt-20 min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading charger details...</p>
+        </div>
       </div>
     );
   }
@@ -210,97 +210,130 @@ const ChargerDetailPage = () => {
   if (!charger) {
     return (
       <div className="pt-20 min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Charger not found</p>
+        <div className="text-center">
+          <Battery className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground font-medium">Charger not found</p>
+          <Button variant="outline" className="mt-4" onClick={() => navigate("/explore")}>Back to Explore</Button>
+        </div>
       </div>
     );
   }
 
   const isAvailable = charger.is_active;
+  const isFav = isFavorite(charger.id);
 
   return (
     <div className="pt-20 pb-12 min-h-screen">
-      <div className="container mx-auto px-4 max-w-5xl">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Badge className={isAvailable ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
-              {isAvailable ? "Available" : "Occupied"}
-            </Badge>
-            <Badge variant="outline">{charger.charger_type || "Type 2"}</Badge>
-            {charger.parking_available && <Badge variant="outline"><Car className="w-3 h-3 mr-1" />Parking</Badge>}
-          </div>
-          <h1 className="font-heading text-3xl font-bold">{charger.title}</h1>
-          <div className="flex items-center gap-1 text-muted-foreground mt-1">
-            <MapPin className="w-4 h-4" />
-            <span>{charger.address}</span>
-          </div>
-          <div className="flex items-center gap-4 mt-3 text-sm">
-            <span className="flex items-center gap-1 text-primary"><Zap className="w-4 h-4" />{charger.power} kW</span>
-            {charger.rating && (
-              <span className="flex items-center gap-1 text-secondary">
-                <Star className="w-4 h-4 fill-secondary" />{charger.rating} ({charger.review_count} reviews)
-              </span>
-            )}
+      <div className="container mx-auto px-4 max-w-6xl">
+        {/* Hero header */}
+        <div className="glass-card rounded-3xl p-8 mb-6 border-glow relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/3 pointer-events-none" />
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <Badge className={cn("rounded-lg px-3 py-1 font-semibold text-xs", isAvailable ? "bg-secondary/15 text-secondary" : "bg-destructive/15 text-destructive")}>
+                  <span className={cn("w-1.5 h-1.5 rounded-full mr-1.5 inline-block", isAvailable ? "bg-secondary" : "bg-destructive")} />
+                  {isAvailable ? "Available Now" : "Currently Occupied"}
+                </Badge>
+                <Badge variant="outline" className="rounded-lg px-3 py-1 text-xs"><Plug className="w-3 h-3 mr-1" />{charger.charger_type || "Type 2"}</Badge>
+                {charger.parking_available && <Badge variant="outline" className="rounded-lg px-3 py-1 text-xs"><Car className="w-3 h-3 mr-1" />Parking</Badge>}
+              </div>
+              {user && (
+                <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => toggleFavorite(charger.id)}>
+                  <Heart className={cn("w-5 h-5", isFav ? "text-destructive fill-destructive" : "text-muted-foreground")} />
+                </Button>
+              )}
+            </div>
+
+            <h1 className="font-heading text-3xl md:text-4xl font-extrabold mb-2">{charger.title}</h1>
+            <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-4">
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span>{charger.address}</span>
+            </div>
+
+            {/* Quick info chips */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold">
+                <Zap className="w-4 h-4" />{charger.power} kW
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-sm">
+                <IndianRupee className="w-4 h-4" />₹{charger.price_per_kwh}/kWh
+              </div>
+              {charger.rating != null && charger.rating > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 text-secondary text-sm font-semibold">
+                  <Star className="w-4 h-4 fill-secondary" />{charger.rating} ({charger.review_count} reviews)
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Pricing Card */}
-          <Card className="glass-light border-border lg:col-span-1">
-            <CardHeader><CardTitle className="font-heading flex items-center gap-2"><IndianRupee className="w-5 h-5" />Pricing</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+          <Card className="glass-card border-none rounded-2xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="font-heading flex items-center gap-2 text-lg"><IndianRupee className="w-5 h-5 text-primary" />Pricing</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              <div className="flex justify-between items-center p-3.5 rounded-xl bg-accent/50">
                 <span className="text-sm text-muted-foreground">Standard Rate</span>
-                <span className="font-heading font-bold">₹{charger.price_per_kwh}/kWh</span>
+                <span className="font-heading font-bold text-lg">₹{charger.price_per_kwh}/kWh</span>
               </div>
               {charger.peak_price_per_kwh && (
-                <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                <div className="flex justify-between items-center p-3.5 rounded-xl bg-accent/50">
                   <span className="text-sm text-muted-foreground">Peak (6–10 PM)</span>
-                  <span className="font-heading font-bold text-secondary">₹{charger.peak_price_per_kwh}/kWh</span>
+                  <span className="font-heading font-bold text-lg text-secondary">₹{charger.peak_price_per_kwh}/kWh</span>
                 </div>
               )}
               {charger.off_peak_price_per_kwh && (
-                <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                <div className="flex justify-between items-center p-3.5 rounded-xl bg-accent/50">
                   <span className="text-sm text-muted-foreground">Off-Peak</span>
-                  <span className="font-heading font-bold">₹{charger.off_peak_price_per_kwh}/kWh</span>
+                  <span className="font-heading font-bold text-lg">₹{charger.off_peak_price_per_kwh}/kWh</span>
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">Platform takes 20% commission. Host earns 80%.</p>
+              <p className="text-xs text-muted-foreground pt-2">Platform takes 20% commission. Host earns 80%.</p>
             </CardContent>
           </Card>
 
           {/* Booking Card */}
-          <Card className="glass-light border-border lg:col-span-2">
-            <CardHeader><CardTitle className="font-heading flex items-center gap-2"><CalendarIcon className="w-5 h-5" />Book a Slot</CardTitle></CardHeader>
+          <Card className="glass-card border-none rounded-2xl lg:col-span-2">
+            <CardHeader className="pb-4">
+              <CardTitle className="font-heading flex items-center gap-2 text-lg"><CalendarIcon className="w-5 h-5 text-primary" />Book a Charging Slot</CardTitle>
+            </CardHeader>
             <CardContent>
-              {accessCode ? (
-                <div className="text-center py-8 space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
-                    <Shield className="w-8 h-8 text-green-400" />
+              {!isAvailable && !accessCode ? (
+                <div className="text-center py-10">
+                  <Battery className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground font-medium">Charger is currently offline</p>
+                  <p className="text-xs text-muted-foreground mt-1">Booking is disabled. Try again later.</p>
+                </div>
+              ) : accessCode ? (
+                <div className="text-center py-8 space-y-5">
+                  <div className="w-20 h-20 rounded-2xl bg-secondary/15 flex items-center justify-center mx-auto">
+                    <Shield className="w-10 h-10 text-secondary" />
                   </div>
-                  <h3 className="font-heading text-xl font-bold">Booking Confirmed!</h3>
-                  <div className="glass rounded-xl p-6 inline-block">
-                    <p className="text-sm text-muted-foreground mb-2">Your Access Code</p>
-                    <p className="font-heading text-4xl font-bold tracking-widest text-primary">{accessCode}</p>
-                    <p className="text-xs text-muted-foreground mt-2">Show this to the host or use at the charger</p>
+                  <h3 className="font-heading text-2xl font-bold">Booking Confirmed!</h3>
+                  <div className="glass-card rounded-2xl p-8 inline-block border-glow">
+                    <p className="text-sm text-muted-foreground mb-3">Your Secure Access Code</p>
+                    <p className="font-heading text-5xl font-black tracking-[0.3em] text-primary">{accessCode}</p>
+                    <p className="text-xs text-muted-foreground mt-3">Show this to the host or use at the charger</p>
                   </div>
                   <div className="flex gap-3 justify-center">
-                    <Button variant="outline" onClick={() => {
-                      const url = `https://www.google.com/maps/dir/?api=1&destination=${charger.latitude},${charger.longitude}`;
-                      window.open(url, "_blank");
+                    <Button variant="outline" className="rounded-xl" onClick={() => {
+                      window.open(`https://www.google.com/maps/dir/?api=1&destination=${charger.latitude},${charger.longitude}`, "_blank");
                     }}>
                       <Navigation className="w-4 h-4 mr-2" />Navigate
                     </Button>
-                    <Button onClick={() => navigate("/driver")}>View Bookings</Button>
+                    <Button className="rounded-xl" onClick={() => navigate("/driver")}>View My Bookings</Button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <p className="text-sm font-medium mb-2">Select Date</p>
+                    <p className="text-sm font-semibold mb-2">Select Date</p>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal rounded-xl h-11", !date && "text-muted-foreground")}>
                           <CalendarIcon className="w-4 h-4 mr-2" />
                           {date ? format(date, "PPP") : "Pick a date"}
                         </Button>
@@ -311,14 +344,14 @@ const ChargerDetailPage = () => {
                           selected={date}
                           onSelect={setDate}
                           disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
-                          className={cn("p-3 pointer-events-auto")}
+                          className="p-3 pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium mb-2">Select Time Slot</p>
+                    <p className="text-sm font-semibold mb-2">Select Time Slot</p>
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                       {TIME_SLOTS.map((slot) => {
                         const isBooked = existingBookings.includes(slot);
@@ -333,23 +366,23 @@ const ChargerDetailPage = () => {
                             disabled={isBooked}
                             onClick={() => {
                               if (!startSlot || (startSlot && endSlot)) {
-                                setStartSlot(slot);
-                                setEndSlot(null);
+                                setStartSlot(slot); setEndSlot(null);
                               } else {
                                 if (slot > startSlot) setEndSlot(slot);
                                 else { setStartSlot(slot); setEndSlot(null); }
                               }
                             }}
                             className={cn(
-                              "p-2 rounded-lg text-xs font-medium transition-all border",
-                              isBooked ? "opacity-30 cursor-not-allowed border-border bg-muted" :
-                              isStart || isEnd ? "bg-primary text-primary-foreground border-primary" :
-                              inRange ? "bg-primary/20 text-primary border-primary/30" :
-                              "border-border hover:border-primary/50 bg-muted/50"
+                              "p-2.5 rounded-xl text-xs font-semibold transition-all border",
+                              isBooked ? "opacity-25 cursor-not-allowed border-border bg-muted" :
+                              isStart || isEnd ? "bg-primary text-primary-foreground border-primary glow-soft" :
+                              inRange ? "bg-primary/15 text-primary border-primary/30" :
+                              "border-border hover:border-primary/40 bg-accent/50"
                             )}
                           >
                             {slot}
-                            {isPeak && !isBooked && <span className="block text-[9px] text-secondary">Peak</span>}
+                            {isPeak && !isBooked && <span className="block text-[9px] text-secondary mt-0.5">Peak</span>}
+                            {isBooked && <span className="block text-[9px] mt-0.5">Booked</span>}
                           </button>
                         );
                       })}
@@ -357,13 +390,13 @@ const ChargerDetailPage = () => {
                   </div>
 
                   {startSlot && endSlot && (
-                    <div className="glass rounded-xl p-4 flex items-center justify-between">
+                    <div className="glass-card rounded-2xl p-5 flex items-center justify-between border-glow">
                       <div>
                         <p className="text-sm text-muted-foreground">Estimated Cost</p>
-                        <p className="font-heading text-2xl font-bold">₹{getPrice()}</p>
-                        <p className="text-xs text-muted-foreground">{startSlot} – {endSlot} · {charger.power} kW</p>
+                        <p className="font-heading text-3xl font-extrabold">₹{getPrice()}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{startSlot} – {endSlot} · {charger.power} kW</p>
                       </div>
-                      <Button size="lg" onClick={handleBook} disabled={booking}>
+                      <Button size="lg" className="rounded-xl glow-primary font-semibold" onClick={handleBook} disabled={booking}>
                         {booking ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
                         Confirm Booking
                       </Button>
@@ -375,41 +408,41 @@ const ChargerDetailPage = () => {
           </Card>
         </div>
 
-        {/* Reviews Section */}
-        <Card className="glass-light border-border mt-6">
+        {/* Reviews */}
+        <Card className="glass-card border-none rounded-2xl mt-6">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="font-heading flex items-center gap-2">
-              <Star className="w-5 h-5" />Reviews ({reviews.length})
+            <CardTitle className="font-heading flex items-center gap-2 text-lg">
+              <Star className="w-5 h-5 text-secondary" />Reviews ({reviews.length})
             </CardTitle>
             {user && (
-              <Button size="sm" variant="outline" onClick={() => setShowReviewForm(!showReviewForm)}>
+              <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setShowReviewForm(!showReviewForm)}>
                 Write Review
               </Button>
             )}
           </CardHeader>
           <CardContent className="space-y-4">
             {showReviewForm && (
-              <div className="glass rounded-xl p-4 space-y-3">
+              <div className="glass-card rounded-2xl p-5 space-y-4 border-glow">
                 <div>
-                  <p className="text-sm font-medium mb-2">Rating</p>
+                  <p className="text-sm font-semibold mb-2">Rating</p>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((n) => (
                       <button key={n} onClick={() => setReviewRating(n)} className="focus:outline-none">
-                        <Star className={cn("w-6 h-6 transition-colors", n <= reviewRating ? "text-secondary fill-secondary" : "text-muted-foreground")} />
+                        <Star className={cn("w-7 h-7 transition-colors", n <= reviewRating ? "text-secondary fill-secondary" : "text-muted-foreground")} />
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium mb-2">Comment</p>
+                  <p className="text-sm font-semibold mb-2">Comment</p>
                   <textarea
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
                     placeholder="Safe parking and fast charging..."
-                    className="w-full rounded-lg border border-border bg-muted p-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none h-20"
+                    className="w-full rounded-xl border border-border bg-accent/50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none h-20"
                   />
                 </div>
-                <Button onClick={handleSubmitReview} disabled={submittingReview} size="sm">
+                <Button onClick={handleSubmitReview} disabled={submittingReview} size="sm" className="rounded-xl">
                   {submittingReview ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Submit Review
                 </Button>
@@ -417,22 +450,25 @@ const ChargerDetailPage = () => {
             )}
 
             {reviews.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No reviews yet. Be the first!</p>
+              <p className="text-sm text-muted-foreground text-center py-6">No reviews yet. Be the first to review!</p>
             ) : (
               reviews.map((r) => (
-                <div key={r.id} className="p-4 rounded-xl bg-muted/50">
+                <div key={r.id} className="p-4 rounded-xl bg-accent/30">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{r.profile?.display_name || "Driver"}</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-xs font-bold text-primary">{(r.profile?.display_name || "D")[0].toUpperCase()}</span>
+                      </div>
+                      <span className="font-semibold text-sm">{r.profile?.display_name || "Driver"}</span>
                       <div className="flex gap-0.5">
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} className={cn("w-3 h-3", i < r.rating ? "text-secondary fill-secondary" : "text-muted-foreground")} />
+                          <Star key={i} className={cn("w-3 h-3", i < r.rating ? "text-secondary fill-secondary" : "text-muted-foreground/30")} />
                         ))}
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{format(new Date(r.created_at), "MMM d, yyyy")}</span>
                   </div>
-                  {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
+                  {r.comment && <p className="text-sm text-muted-foreground pl-[42px]">{r.comment}</p>}
                 </div>
               ))
             )}
