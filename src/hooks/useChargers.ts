@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Charger {
@@ -92,6 +93,26 @@ async function fetchOSMChargers(lat: number, lng: number, radiusM: number): Prom
 }
 
 export function useChargers({ search, powerFilter, lat, lng, radiusM = 10000 }: UseChargersOptions = {}) {
+  const queryClient = useQueryClient();
+
+  // Subscribe to realtime charger updates for live availability
+  useEffect(() => {
+    const channel = supabase
+      .channel("chargers-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chargers" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["chargers"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["chargers", search, powerFilter, lat, lng, radiusM],
     queryFn: async (): Promise<Charger[]> => {
@@ -107,7 +128,7 @@ export function useChargers({ search, powerFilter, lat, lng, radiusM = 10000 }: 
       let merged = [...voltshare, ...applyFilters(osm, search, powerFilter)];
       return merged;
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
   });
 }
 
