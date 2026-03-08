@@ -1,10 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { mockChargers, Charger } from "@/data/mockChargers";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import "leaflet.markercluster";
+import { useChargers, Charger } from "@/hooks/useChargers";
 import ChargerCard from "@/components/ChargerCard";
 import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, LocateFixed, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -30,78 +34,146 @@ const chargerIcon = new L.DivIcon({
   iconAnchor: [16, 16],
 });
 
+const userIcon = new L.DivIcon({
+  html: `<div style="background:hsl(142,71%,45%);width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 0 15px hsl(142,71%,45%,0.6);"></div>`,
+  className: "",
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+});
+
 const Explore = () => {
   const [search, setSearch] = useState("");
   const [powerFilter, setPowerFilter] = useState("all");
   const [selected, setSelected] = useState<Charger | null>(null);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLng, setUserLng] = useState<number | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  const { data: chargers = [], isLoading } = useChargers({
+    search,
+    powerFilter: powerFilter as "all" | "standard" | "fast",
+    lat: userLat,
+    lng: userLng,
+  });
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
-  const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      mockChargers.filter((c) => {
-        const matchSearch =
-          c.title.toLowerCase().includes(search.toLowerCase()) ||
-          c.address.toLowerCase().includes(search.toLowerCase());
-        const matchPower =
-          powerFilter === "all" || (powerFilter === "fast" ? c.power >= 11 : c.power < 11);
-        return matchSearch && matchPower;
-      }),
-    [search, powerFilter],
-  );
+  // Detect user location on mount
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      setLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLat(pos.coords.latitude);
+          setUserLng(pos.coords.longitude);
+          setLocating(false);
+        },
+        () => setLocating(false),
+        { timeout: 8000 }
+      );
+    }
+  }, []);
 
+  // Initialize map
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
     const map = L.map(mapContainerRef.current, {
-      center: [12.9352, 77.6245],
+      center: [12.9716, 77.5946],
       zoom: 12,
       zoomControl: false,
     });
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
     }).addTo(map);
 
     mapRef.current = map;
-    markersLayerRef.current = L.layerGroup().addTo(map);
+    clusterGroupRef.current = L.markerClusterGroup({
+      maxClusterRadius: 50,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      iconCreateFunction: (cluster) => {
+        const count = cluster.getChildCount();
+        return L.divIcon({
+          html: `<div style="background:hsl(213,100%,50%);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;box-shadow:0 0 20px hsl(213,100%,50%,0.5);border:2px solid white;">${count}</div>`,
+          className: "",
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+        });
+      },
+    });
+    map.addLayer(clusterGroupRef.current);
 
     return () => {
       map.remove();
       mapRef.current = null;
-      markersLayerRef.current = null;
+      clusterGroupRef.current = null;
     };
   }, []);
 
+  // Update user marker when location changes
   useEffect(() => {
-    if (!mapRef.current || !markersLayerRef.current) return;
+    if (!mapRef.current || userLat == null || userLng == null) return;
 
-    markersLayerRef.current.clearLayers();
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLatLng([userLat, userLng]);
+    } else {
+      userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon })
+        .bindPopup("You are here")
+        .addTo(mapRef.current);
+    }
+    mapRef.current.setView([userLat, userLng], 13);
+  }, [userLat, userLng]);
 
-    filtered.forEach((c) => {
+  // Update markers when chargers change
+  useEffect(() => {
+    if (!mapRef.current || !clusterGroupRef.current) return;
+
+    clusterGroupRef.current.clearLayers();
+
+    chargers.forEach((c) => {
       const marker = L.marker([c.latitude, c.longitude], { icon: chargerIcon });
       marker.bindPopup(`
         <div style="min-width:200px;padding:4px 2px;">
           <h3 style="margin:0 0 6px 0;font-size:14px;font-weight:600;">${c.title}</h3>
           <div style="font-size:12px;opacity:.8;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
             <span>${c.power}kW</span>
-            <span>₹${c.pricePerKwh}/kWh</span>
-            <span>★ ${c.rating}</span>
+            <span>₹${c.price_per_kwh}/kWh</span>
+            <span>★ ${c.rating ?? "N/A"}</span>
           </div>
           <p style="margin:0;font-size:12px;opacity:.7;">${c.address}</p>
         </div>
       `);
       marker.on("click", () => setSelected(c));
-      marker.addTo(markersLayerRef.current!);
+      clusterGroupRef.current!.addLayer(marker);
     });
 
-    if (filtered.length > 0) {
-      const bounds = L.latLngBounds(filtered.map((c) => [c.latitude, c.longitude] as [number, number]));
+    if (chargers.length > 0 && userLat == null) {
+      const bounds = L.latLngBounds(chargers.map((c) => [c.latitude, c.longitude] as [number, number]));
       mapRef.current.fitBounds(bounds.pad(0.15));
     }
-  }, [filtered]);
+  }, [chargers, userLat]);
+
+  const handleLocateMe = () => {
+    if ("geolocation" in navigator) {
+      setLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLat(pos.coords.latitude);
+          setUserLng(pos.coords.longitude);
+          setLocating(false);
+        },
+        () => {
+          setLocating(false);
+        },
+        { timeout: 8000 }
+      );
+    }
+  };
 
   return (
     <div className="pt-16 h-screen flex flex-col">
@@ -126,12 +198,17 @@ const Explore = () => {
             <SelectItem value="fast">Fast (≥11kW)</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" size="icon" onClick={handleLocateMe} disabled={locating}>
+          {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
+        </Button>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         <div className="w-96 border-r border-border overflow-y-auto p-4 space-y-3 hidden lg:block">
-          <p className="text-sm text-muted-foreground mb-2">{filtered.length} chargers found</p>
-          {filtered.map((c) => (
+          <p className="text-sm text-muted-foreground mb-2">
+            {isLoading ? "Loading chargers..." : `${chargers.length} chargers found`}
+          </p>
+          {chargers.map((c) => (
             <ChargerCard key={c.id} charger={c} compact onSelect={setSelected} />
           ))}
         </div>
@@ -140,7 +217,7 @@ const Explore = () => {
           <div ref={mapContainerRef} className="h-full w-full" />
 
           <div className="lg:hidden absolute bottom-0 left-0 right-0 glass rounded-t-2xl max-h-[40vh] overflow-y-auto p-4 space-y-3">
-            {filtered.map((c) => (
+            {chargers.map((c) => (
               <ChargerCard key={c.id} charger={c} compact onSelect={setSelected} />
             ))}
           </div>
