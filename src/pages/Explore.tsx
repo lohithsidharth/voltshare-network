@@ -25,13 +25,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-const chargerIcon = new L.DivIcon({
+const voltshareIcon = new L.DivIcon({
   html: `<div style="background:hsl(213,100%,50%);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px hsl(213,100%,50%,0.5);border:2px solid white;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
   </div>`,
   className: "",
   iconSize: [32, 32],
   iconAnchor: [16, 16],
+});
+
+const osmIcon = new L.DivIcon({
+  html: `<div style="background:hsl(38,92%,50%);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px hsl(38,92%,50%,0.5);border:2px solid white;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+  </div>`,
+  className: "",
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
 });
 
 const userIcon = new L.DivIcon({
