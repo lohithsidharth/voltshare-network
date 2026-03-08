@@ -1,4 +1,4 @@
-import { Charger } from "@/data/mockChargers";
+import { Charger } from "@/hooks/useChargers";
 import { Zap, Star, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -23,7 +23,7 @@ const ChargerCard = ({ charger, compact, onSelect }: Props) => (
       </div>
       <div className="flex items-center gap-1 text-secondary text-sm font-medium">
         <Star className="w-3.5 h-3.5 fill-secondary" />
-        {charger.rating}
+        {charger.rating ?? "N/A"}
       </div>
     </div>
 
@@ -32,7 +32,7 @@ const ChargerCard = ({ charger, compact, onSelect }: Props) => (
         <Zap className="w-3.5 h-3.5 text-primary" />
         {charger.power} kW
       </span>
-      <span>₹{charger.pricePerKwh}/kWh</span>
+      <span>₹{charger.price_per_kwh}/kWh</span>
       <span className="text-xs">{charger.availability}</span>
     </div>
 
