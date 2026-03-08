@@ -370,10 +370,8 @@ const Explore = () => {
 
           {/* Smart recommendation */}
           {recommendedCharger && (
-            <div className="mb-4">
-              <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Zap className="w-3 h-3" /> Best Charger Near You
-              </p>
+            <div className="mb-3">
+              <p className="text-xs font-medium text-primary mb-1.5">Best Charger Near You</p>
               <ChargerCard charger={recommendedCharger} compact recommended onSelect={(c) => {
                 if (c.source === "voltshare") navigate(`/charger/${c.id}`);
                 else setSelected(c);
