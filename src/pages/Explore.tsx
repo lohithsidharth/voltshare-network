@@ -1,12 +1,10 @@
-import { useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { mockChargers, Charger } from "@/data/mockChargers";
 import ChargerCard from "@/components/ChargerCard";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, SlidersHorizontal, Zap, Star, MapPin } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,7 +14,7 @@ import {
 } from "@/components/ui/select";
 
 // Fix leaflet default icon
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
@@ -37,15 +35,76 @@ const Explore = () => {
   const [powerFilter, setPowerFilter] = useState("all");
   const [selected, setSelected] = useState<Charger | null>(null);
 
-  const filtered = mockChargers.filter((c) => {
-    const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) || c.address.toLowerCase().includes(search.toLowerCase());
-    const matchPower = powerFilter === "all" || (powerFilter === "fast" ? c.power >= 11 : c.power < 11);
-    return matchSearch && matchPower;
-  });
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
+
+  const filtered = useMemo(
+    () =>
+      mockChargers.filter((c) => {
+        const matchSearch =
+          c.title.toLowerCase().includes(search.toLowerCase()) ||
+          c.address.toLowerCase().includes(search.toLowerCase());
+        const matchPower =
+          powerFilter === "all" || (powerFilter === "fast" ? c.power >= 11 : c.power < 11);
+        return matchSearch && matchPower;
+      }),
+    [search, powerFilter],
+  );
+
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    const map = L.map(mapContainerRef.current, {
+      center: [12.9352, 77.6245],
+      zoom: 12,
+      zoomControl: false,
+    });
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    }).addTo(map);
+
+    mapRef.current = map;
+    markersLayerRef.current = L.layerGroup().addTo(map);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markersLayerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current || !markersLayerRef.current) return;
+
+    markersLayerRef.current.clearLayers();
+
+    filtered.forEach((c) => {
+      const marker = L.marker([c.latitude, c.longitude], { icon: chargerIcon });
+      marker.bindPopup(`
+        <div style="min-width:200px;padding:4px 2px;">
+          <h3 style="margin:0 0 6px 0;font-size:14px;font-weight:600;">${c.title}</h3>
+          <div style="font-size:12px;opacity:.8;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+            <span>${c.power}kW</span>
+            <span>₹${c.pricePerKwh}/kWh</span>
+            <span>★ ${c.rating}</span>
+          </div>
+          <p style="margin:0;font-size:12px;opacity:.7;">${c.address}</p>
+        </div>
+      `);
+      marker.on("click", () => setSelected(c));
+      marker.addTo(markersLayerRef.current!);
+    });
+
+    if (filtered.length > 0) {
+      const bounds = L.latLngBounds(filtered.map((c) => [c.latitude, c.longitude] as [number, number]));
+      mapRef.current.fitBounds(bounds.pad(0.15));
+    }
+  }, [filtered]);
 
   return (
     <div className="pt-16 h-screen flex flex-col">
-      {/* Search bar */}
       <div className="glass border-b border-border px-4 py-3 flex items-center gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -70,7 +129,6 @@ const Explore = () => {
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
         <div className="w-96 border-r border-border overflow-y-auto p-4 space-y-3 hidden lg:block">
           <p className="text-sm text-muted-foreground mb-2">{filtered.length} chargers found</p>
           {filtered.map((c) => (
@@ -78,43 +136,20 @@ const Explore = () => {
           ))}
         </div>
 
-        {/* Map */}
         <div className="flex-1 relative">
-          <MapContainer
-            center={[12.9352, 77.6245]}
-            zoom={12}
-            className="h-full w-full"
-            zoomControl={false}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
-            {filtered.map((c) => (
-              <Marker key={c.id} position={[c.latitude, c.longitude]} icon={chargerIcon}>
-                <Popup className="!rounded-xl">
-                  <div className="p-1 min-w-[200px]">
-                    <h3 className="font-semibold text-sm">{c.title}</h3>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-0.5"><Zap className="w-3 h-3" />{c.power}kW</span>
-                      <span>₹{c.pricePerKwh}/kWh</span>
-                      <span className="flex items-center gap-0.5"><Star className="w-3 h-3" />{c.rating}</span>
-                    </div>
-                    <p className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                      <MapPin className="w-3 h-3" />{c.address}
-                    </p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+          <div ref={mapContainerRef} className="h-full w-full" />
 
-          {/* Mobile charger list overlay */}
           <div className="lg:hidden absolute bottom-0 left-0 right-0 glass rounded-t-2xl max-h-[40vh] overflow-y-auto p-4 space-y-3">
             {filtered.map((c) => (
               <ChargerCard key={c.id} charger={c} compact onSelect={setSelected} />
             ))}
           </div>
+
+          {selected && (
+            <div className="hidden md:block absolute right-4 top-4 w-80">
+              <ChargerCard charger={selected} onSelect={setSelected} />
+            </div>
+          )}
         </div>
       </div>
     </div>
