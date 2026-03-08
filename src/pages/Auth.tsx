@@ -197,13 +197,6 @@ const Auth = () => {
             Enter the 6-digit code sent to <span className="text-foreground font-medium">{phone}</span>
           </p>
 
-          {devOtp && (
-            <div className="rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-center">
-              <p className="text-xs text-secondary font-medium">DEV MODE — Your OTP is:</p>
-              <p className="font-heading text-2xl font-bold text-secondary tracking-widest">{devOtp}</p>
-            </div>
-          )}
-
           <div className="flex justify-center">
             <InputOTP maxLength={6} value={otp} onChange={setOtp}>
               <InputOTPGroup>

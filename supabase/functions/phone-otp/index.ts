@@ -52,8 +52,6 @@ async function handleSendOTP(phone: string) {
     JSON.stringify({
       success: true,
       message: "OTP sent successfully",
-      // Remove this in production — only for testing
-      dev_otp: code,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
