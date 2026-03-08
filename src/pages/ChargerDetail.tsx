@@ -14,27 +14,6 @@ import {
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
-function useRazorpayScript() {
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    if (document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
-      setLoaded(true);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => setLoaded(true);
-    document.body.appendChild(script);
-  }, []);
-  return loaded;
-}
 
 interface ChargerDetail {
   id: string; title: string; address: string; latitude: number; longitude: number;
