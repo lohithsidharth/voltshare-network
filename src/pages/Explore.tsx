@@ -95,12 +95,12 @@ const Explore = () => {
                 <Popup className="!rounded-xl">
                   <div className="p-1 min-w-[200px]">
                     <h3 className="font-semibold text-sm">{c.title}</h3>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-0.5"><Zap className="w-3 h-3" />{c.power}kW</span>
                       <span>₹{c.pricePerKwh}/kWh</span>
                       <span className="flex items-center gap-0.5"><Star className="w-3 h-3" />{c.rating}</span>
                     </div>
-                    <p className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                    <p className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <MapPin className="w-3 h-3" />{c.address}
                     </p>
                   </div>
