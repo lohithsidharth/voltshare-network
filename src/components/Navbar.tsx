@@ -13,6 +13,7 @@ const Navbar = () => {
   const links = [
     { to: "/", label: "Home" },
     { to: "/explore", label: "Explore" },
+    { to: "/trip-planner", label: "Trip Planner" },
     ...(role === "driver" ? [{ to: "/driver", label: "Dashboard" }] : []),
     ...(role === "host" ? [{ to: "/host", label: "Dashboard" }] : []),
   ];
