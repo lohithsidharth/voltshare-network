@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
-  MapPin, Star, Calendar as CalendarIcon, Navigation, Loader2, Lock, Heart, CreditCard,
+  MapPin, Star, Calendar as CalendarIcon, Navigation, Loader2, Lock, Heart,
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 
