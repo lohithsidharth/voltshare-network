@@ -59,13 +59,13 @@ function makeVoltshareIcon(status: AvailStatus) {
 function makeOsmIcon(status: AvailStatus) {
   const dot = statusColors[status];
   return new L.DivIcon({
-    html: `<div style="position:relative;background:hsl(38,92%,50%);width:28px;height:28px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px hsl(38,92%,50%,0.4);border:2px solid hsla(0,0%,100%,0.2);">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      <span style="position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:${dot};border:2px solid hsl(222,44%,10%);"></span>
+    html: `<div style="position:relative;background:hsl(38,92%,50%);width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid hsla(0,0%,100%,0.15);">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span style="position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:${dot};border:2px solid hsl(222,47%,7%);"></span>
     </div>`,
     className: "",
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 }
 
