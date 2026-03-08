@@ -60,6 +60,8 @@ export type Database = {
           final_price: number | null
           id: string
           payment_status: Database["public"]["Enums"]["payment_status"]
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
           start_time: string
           status: Database["public"]["Enums"]["booking_status"]
           updated_at: string
@@ -74,6 +76,8 @@ export type Database = {
           final_price?: number | null
           id?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
@@ -88,6 +92,8 @@ export type Database = {
           final_price?: number | null
           id?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
