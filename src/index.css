@@ -91,9 +91,11 @@
   body {
     @apply bg-background text-foreground font-body antialiased;
     background-image: 
-      radial-gradient(circle at 1px 1px, hsl(145 100% 42% / 0.04) 1px, transparent 0),
-      linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(145 100% 42% / 0.02) 50%, hsl(0 0% 4%) 100%);
-    background-size: 32px 32px, 100% 100%;
+      radial-gradient(circle at 1px 1px, hsl(145 100% 42% / 0.03) 1px, transparent 0),
+      radial-gradient(ellipse at 20% 50%, hsl(145 100% 42% / 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, hsl(145 100% 42% / 0.02) 0%, transparent 40%),
+      linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 3%) 100%);
+    background-size: 24px 24px, 100% 100%, 100% 100%, 100% 100%;
   }
 }
 
