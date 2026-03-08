@@ -308,28 +308,28 @@ const Explore = () => {
   }).length;
 
   return (
-    <div className="pt-16 h-screen flex flex-col">
+    <div className="pt-14 h-screen flex flex-col">
       {/* Search bar */}
-      <div className="glass border-b border-border/50 px-4 py-3 flex items-center gap-3">
+      <div className="border-b border-border px-4 py-2.5 flex items-center gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search charger location..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-accent/50 border-none rounded-xl h-10"
+            className="pl-10 bg-accent border-border rounded-md h-9 text-sm"
           />
         </div>
         <Button
           variant="outline"
           size="sm"
-          className={cn("rounded-xl gap-2", showFilters && "bg-primary/10 border-primary/30 text-primary")}
+          className={cn("rounded-md gap-2 h-9", showFilters && "bg-accent text-foreground")}
           onClick={() => setShowFilters(!showFilters)}
         >
-          <SlidersHorizontal className="w-4 h-4" />
+          <SlidersHorizontal className="w-3.5 h-3.5" />
           Filters
         </Button>
-        <Button variant="outline" size="icon" className="rounded-xl" onClick={handleLocateMe} disabled={locating}>
+        <Button variant="outline" size="icon" className="rounded-md h-9 w-9" onClick={handleLocateMe} disabled={locating}>
           {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
         </Button>
       </div>
