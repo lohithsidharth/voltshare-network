@@ -58,8 +58,9 @@ const TIME_SLOTS = [
 const ChargerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const razorpayReady = useRazorpayScript();
   const [charger, setCharger] = useState<ChargerDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
