@@ -129,7 +129,7 @@ const Auth = () => {
   const resetPhone = () => {
     setOtpSent(false);
     setOtp("");
-    setDevOtp(null);
+    
   };
 
   const RoleSelector = () => (
