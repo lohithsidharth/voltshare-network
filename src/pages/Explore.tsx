@@ -251,11 +251,13 @@ const Explore = () => {
     clusterGroupRef.current.clearLayers();
 
     allChargers.forEach((c) => {
-      const icon = c.source === "osm" ? osmIcon : voltshareIcon;
+      const status = getAvailabilityStatus(c);
+      const icon = c.source === "osm" ? makeOsmIcon(status) : makeVoltshareIcon(status);
       const marker = L.marker([c.latitude, c.longitude], { icon });
       const sourceTag = c.source === "osm"
         ? `<span style="background:hsl(38,92%,50%);color:white;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;">OSM</span>`
         : `<span style="background:hsl(213,100%,50%);color:white;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;">VoltShare</span>`;
+      const statusLabel = status === "available" ? "🟢 Available" : status === "occupied" ? "🔴 Occupied" : "⚫ Unknown";
       const priceInfo = c.source === "voltshare" && c.price_per_kwh > 0
         ? `<span>₹${c.price_per_kwh}/kWh</span>` : "";
       const operatorInfo = c.source === "osm" && (c as any).operator
@@ -266,6 +268,7 @@ const Explore = () => {
             ${sourceTag}
             <h3 style="margin:0;font-size:14px;font-weight:600;">${c.title}</h3>
           </div>
+          <div style="font-size:11px;margin-bottom:6px;font-weight:600;color:${statusColors[status]};">${statusLabel}</div>
           <div style="font-size:12px;opacity:.8;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
             ${c.power > 0 ? `<span>${c.power}kW</span>` : ""}
             ${priceInfo}
