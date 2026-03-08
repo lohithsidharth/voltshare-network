@@ -501,47 +501,38 @@ const Explore = () => {
             )}
 
             {/* Clustered charger markers */}
-            <MarkerClusterGroup
-              chunkedLoading
-              maxClusterRadius={60}
-              spiderfyOnMaxZoom
-              showCoverageOnHover={false}
-            >
-              {allChargers
-                .filter((c) => c.latitude != null && c.longitude != null)
-                .map((c) => (
-                  <Marker
-                    key={c.id}
-                    position={[c.latitude, c.longitude]}
-                    icon={getChargerIcon(c)}
-                    eventHandlers={{
-                      click: () => {
-                        if (c.source === "voltshare") {
-                          navigate(`/charger/${c.id}`);
-                        } else {
-                          setSelected(c);
-                          setSelectedOCM(null);
-                        }
-                      },
-                    }}
-                  />
-                ))}
-              {filteredOCM
-                .filter((c) => c.latitude != null && c.longitude != null)
-                .map((c) => (
-                  <Marker
-                    key={`ocm-${c.ocm_id}`}
-                    position={[c.latitude, c.longitude]}
-                    icon={getOCMIcon(c)}
-                    eventHandlers={{
-                      click: () => {
-                        setSelectedOCM(c);
-                        setSelected(null);
-                      },
-                    }}
-                  />
-                ))}
-            </MarkerClusterGroup>
+            <MarkerClusterLayer
+              items={[
+                ...allChargers
+                  .filter((c) => c.latitude != null && c.longitude != null)
+                  .map((c) => ({
+                    id: c.id,
+                    lat: c.latitude,
+                    lng: c.longitude,
+                    icon: getChargerIcon(c),
+                    onClick: () => {
+                      if (c.source === "voltshare") {
+                        navigate(`/charger/${c.id}`);
+                      } else {
+                        setSelected(c);
+                        setSelectedOCM(null);
+                      }
+                    },
+                  })),
+                ...filteredOCM
+                  .filter((c) => c.latitude != null && c.longitude != null)
+                  .map((c) => ({
+                    id: `ocm-${c.ocm_id}`,
+                    lat: c.latitude,
+                    lng: c.longitude,
+                    icon: getOCMIcon(c),
+                    onClick: () => {
+                      setSelectedOCM(c);
+                      setSelected(null);
+                    },
+                  })),
+              ]}
+            />
           </MapContainer>
 
           {/* Legend */}
