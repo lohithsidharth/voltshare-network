@@ -28,7 +28,7 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
-  const [devOtp, setDevOtp] = useState<string | null>(null);
+  
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +76,6 @@ const Auth = () => {
       } else {
         setOtpSent(true);
         setPhone(formatted);
-        if (data?.dev_otp) setDevOtp(data.dev_otp);
         toast({ title: "OTP Sent!", description: `A 6-digit code was sent to ${formatted}` });
       }
     } catch (err: any) {
@@ -130,7 +129,7 @@ const Auth = () => {
   const resetPhone = () => {
     setOtpSent(false);
     setOtp("");
-    setDevOtp(null);
+    
   };
 
   const RoleSelector = () => (
@@ -197,13 +196,6 @@ const Auth = () => {
           <p className="text-sm text-muted-foreground">
             Enter the 6-digit code sent to <span className="text-foreground font-medium">{phone}</span>
           </p>
-
-          {devOtp && (
-            <div className="rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-center">
-              <p className="text-xs text-secondary font-medium">DEV MODE — Your OTP is:</p>
-              <p className="font-heading text-2xl font-bold text-secondary tracking-widest">{devOtp}</p>
-            </div>
-          )}
 
           <div className="flex justify-center">
             <InputOTP maxLength={6} value={otp} onChange={setOtp}>
