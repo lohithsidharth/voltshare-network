@@ -171,6 +171,35 @@ export type Database = {
         }
         Relationships: []
       }
+      favorites: {
+        Row: {
+          charger_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          charger_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          charger_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_charger_id_fkey"
+            columns: ["charger_id"]
+            isOneToOne: false
+            referencedRelation: "chargers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       otp_codes: {
         Row: {
           code: string
@@ -204,27 +233,33 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_verified: boolean | null
           phone: string | null
           updated_at: string
           user_id: string
+          verification_date: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          is_verified?: boolean | null
           phone?: string | null
           updated_at?: string
           user_id: string
+          verification_date?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          is_verified?: boolean | null
           phone?: string | null
           updated_at?: string
           user_id?: string
+          verification_date?: string | null
         }
         Relationships: []
       }
