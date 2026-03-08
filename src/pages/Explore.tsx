@@ -317,6 +317,18 @@ const Explore = () => {
         <div className="flex-1 relative">
           <div ref={mapContainerRef} className="h-full w-full" />
 
+          {/* Source count badge */}
+          <div className="absolute top-4 left-4 z-[1000] flex gap-2">
+            <div className="glass rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs font-medium">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(38,92%,50%)" }} />
+              <span className="text-foreground">{osmAsChargers.length} OSM</span>
+            </div>
+            <div className="glass rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs font-medium">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(213,100%,50%)" }} />
+              <span className="text-foreground">{voltshareChargers.length} VoltShare</span>
+            </div>
+          </div>
+
           <div className="lg:hidden absolute bottom-0 left-0 right-0 glass rounded-t-2xl max-h-[40vh] overflow-y-auto p-4 space-y-3">
             {allChargers.map((c) => (
               <ChargerCard key={c.id} charger={c} compact onSelect={setSelected} />
