@@ -361,6 +361,17 @@ const Explore = () => {
 
       <div className="flex-1 flex overflow-hidden">
         <div className="w-96 border-r border-border overflow-y-auto p-4 space-y-3 hidden lg:block">
+          {recommendedCharger && (
+            <div className="mb-4">
+              <p className="text-xs font-semibold text-secondary mb-2 flex items-center gap-1">
+                <Zap className="w-3 h-3" /> Smart Match — Best charger for you
+              </p>
+              <ChargerCard charger={recommendedCharger} compact recommended onSelect={(c) => {
+                if (c.source === "voltshare") navigate(`/charger/${c.id}`);
+                else setSelected(c);
+              }} />
+            </div>
+          )}
           <p className="text-sm text-muted-foreground mb-2">
             {isLoading ? "Loading chargers..." : `${allChargers.length} chargers found`}
           </p>
