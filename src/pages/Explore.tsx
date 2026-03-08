@@ -249,7 +249,7 @@ const MarkerClusterLayer = ({ items }: { items: ClusterItem[] }) => {
   return null;
 };
 
-
+const Explore = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [powerFilter, setPowerFilter] = useState("all");
