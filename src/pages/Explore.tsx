@@ -46,13 +46,13 @@ const statusColors: Record<AvailStatus, string> = {
 function makeVoltshareIcon(status: AvailStatus) {
   const dot = statusColors[status];
   return new L.DivIcon({
-    html: `<div style="position:relative;background:hsl(213,100%,50%);width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px hsl(213,100%,50%,0.4);border:2px solid hsla(0,0%,100%,0.3);">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      <span style="position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:${dot};border:2px solid hsl(222,44%,10%);${status === 'available' ? 'animation:marker-pulse 2s infinite;' : ''}"></span>
+    html: `<div style="position:relative;background:hsl(213,100%,50%);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid hsla(0,0%,100%,0.2);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span style="position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:${dot};border:2px solid hsl(222,47%,7%);"></span>
     </div>`,
     className: "",
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
   });
 }
 
