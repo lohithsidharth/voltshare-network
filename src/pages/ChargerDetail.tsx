@@ -39,7 +39,7 @@ const ChargerDetailPage = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const razorpayReady = useRazorpayScript();
+  
   const [charger, setCharger] = useState<ChargerDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
