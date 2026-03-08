@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { lat, lng, radius = 10000 } = await req.json();
+    const { lat, lng, radius = 5000 } = await req.json();
 
     if (!lat || !lng) {
       return new Response(
@@ -29,13 +29,11 @@ Deno.serve(async (req) => {
     }
 
     // Overpass QL query for EV charging stations within radius
+    const clampedRadius = Math.min(radius, 5000);
     const query = `
-      [out:json][timeout:25];
-      (
-        node["amenity"="charging_station"](around:${radius},${lat},${lng});
-        way["amenity"="charging_station"](around:${radius},${lat},${lng});
-      );
-      out center body;
+      [out:json][timeout:10];
+      node["amenity"="charging_station"](around:${clampedRadius},${lat},${lng});
+      out body 50;
     `;
 
     const response = await fetch("https://overpass-api.de/api/interpreter", {
