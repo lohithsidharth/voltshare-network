@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,31 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
-  MapPin, Star, Calendar as CalendarIcon, Navigation, Loader2, Lock, Heart,
+  MapPin, Star, Calendar as CalendarIcon, Navigation, Loader2, Lock, Heart, CreditCard,
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+function useRazorpayScript() {
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    if (document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
+      setLoaded(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => setLoaded(true);
+    document.body.appendChild(script);
+  }, []);
+  return loaded;
+}
 
 interface ChargerDetail {
   id: string; title: string; address: string; latitude: number; longitude: number;
