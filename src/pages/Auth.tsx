@@ -28,7 +28,7 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
-  const [devOtp, setDevOtp] = useState<string | null>(null);
+  
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
