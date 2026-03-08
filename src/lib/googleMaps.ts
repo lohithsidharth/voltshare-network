@@ -2,7 +2,7 @@ export const GOOGLE_MAPS_API_KEY = "AIzaSyAosQUR5rbG9obfNZJ-14IyAcFF8lgoeWs";
 
 export const GOOGLE_MAPS_LIBRARIES: ("places" | "geometry" | "drawing")[] = ["places", "geometry"];
 
-export const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
+export const DARK_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: "#0a0f1a" }] },
   { elementType: "labels.text.stroke", stylers: [{ color: "#0a0f1a" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#556677" }] },
