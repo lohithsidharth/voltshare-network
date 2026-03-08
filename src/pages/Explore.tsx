@@ -430,7 +430,7 @@ const Explore = () => {
           </div>
 
           {/* Mobile bottom sheet */}
-          <div className="lg:hidden absolute bottom-0 left-0 right-0 glass rounded-t-2xl max-h-[40vh] overflow-y-auto p-4 space-y-3">
+          <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-background border-t border-border rounded-t-lg max-h-[40vh] overflow-y-auto p-3 space-y-2">
             {allChargers.slice(0, 10).map((c) => (
               <ChargerCard key={c.id} charger={c} compact onSelect={(ch) => {
                 setSelected(ch);
