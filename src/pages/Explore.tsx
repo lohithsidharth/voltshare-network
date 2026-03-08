@@ -46,22 +46,9 @@ const statusColors: Record<AvailStatus, string> = {
 function makeVoltshareIcon(status: AvailStatus) {
   const dot = statusColors[status];
   return new L.DivIcon({
-    html: `<div style="position:relative;background:hsl(213,100%,50%);width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px hsl(213,100%,50%,0.4);border:2px solid hsla(0,0%,100%,0.3);">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      <span style="position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:${dot};border:2px solid hsl(222,44%,10%);${status === 'available' ? 'animation:marker-pulse 2s infinite;' : ''}"></span>
-    </div>`,
-    className: "",
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-  });
-}
-
-function makeOsmIcon(status: AvailStatus) {
-  const dot = statusColors[status];
-  return new L.DivIcon({
-    html: `<div style="position:relative;background:hsl(38,92%,50%);width:28px;height:28px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px hsl(38,92%,50%,0.4);border:2px solid hsla(0,0%,100%,0.2);">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      <span style="position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:${dot};border:2px solid hsl(222,44%,10%);"></span>
+    html: `<div style="position:relative;background:hsl(213,100%,50%);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid hsla(0,0%,100%,0.2);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span style="position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:${dot};border:2px solid hsl(222,47%,7%);"></span>
     </div>`,
     className: "",
     iconSize: [28, 28],
@@ -69,11 +56,24 @@ function makeOsmIcon(status: AvailStatus) {
   });
 }
 
+function makeOsmIcon(status: AvailStatus) {
+  const dot = statusColors[status];
+  return new L.DivIcon({
+    html: `<div style="position:relative;background:hsl(38,92%,50%);width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid hsla(0,0%,100%,0.15);">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span style="position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:${dot};border:2px solid hsl(222,47%,7%);"></span>
+    </div>`,
+    className: "",
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+}
+
 const userIcon = new L.DivIcon({
-  html: `<div style="background:hsl(213,100%,50%);width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 20px hsl(213,100%,50%,0.5);"></div>`,
+  html: `<div style="background:hsl(213,100%,50%);width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>`,
   className: "",
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
 });
 
 const Explore = () => {
@@ -199,10 +199,10 @@ const Explore = () => {
       iconCreateFunction: (cluster) => {
         const count = cluster.getChildCount();
         return L.divIcon({
-          html: `<div style="background:hsl(213,100%,50%);width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;font-family:Outfit,sans-serif;box-shadow:0 0 20px hsl(213,100%,50%,0.4);border:2px solid hsla(0,0%,100%,0.2);">${count}</div>`,
+          html: `<div style="background:hsl(213,100%,50%);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:13px;font-family:Outfit,sans-serif;border:2px solid hsla(0,0%,100%,0.15);">${count}</div>`,
           className: "",
-          iconSize: [42, 42],
-          iconAnchor: [21, 21],
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
         });
       },
     });
@@ -308,79 +308,70 @@ const Explore = () => {
   }).length;
 
   return (
-    <div className="pt-16 h-screen flex flex-col">
+    <div className="pt-14 h-screen flex flex-col">
       {/* Search bar */}
-      <div className="glass border-b border-border/50 px-4 py-3 flex items-center gap-3">
+      <div className="border-b border-border px-4 py-2.5 flex items-center gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search charger location..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-accent/50 border-none rounded-xl h-10"
+            className="pl-10 bg-accent border-border rounded-md h-9 text-sm"
           />
         </div>
         <Button
           variant="outline"
           size="sm"
-          className={cn("rounded-xl gap-2", showFilters && "bg-primary/10 border-primary/30 text-primary")}
+          className={cn("rounded-md gap-2 h-9", showFilters && "bg-accent text-foreground")}
           onClick={() => setShowFilters(!showFilters)}
         >
-          <SlidersHorizontal className="w-4 h-4" />
+          <SlidersHorizontal className="w-3.5 h-3.5" />
           Filters
         </Button>
-        <Button variant="outline" size="icon" className="rounded-xl" onClick={handleLocateMe} disabled={locating}>
+        <Button variant="outline" size="icon" className="rounded-md h-9 w-9" onClick={handleLocateMe} disabled={locating}>
           {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
         </Button>
       </div>
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="glass border-b border-border/50 px-4 py-3 flex items-center gap-3 animate-fade-in">
-          <div className="flex items-center gap-2">
-            <Battery className="w-4 h-4 text-primary" />
-            <Select value={powerFilter} onValueChange={setPowerFilter}>
-              <SelectTrigger className="w-36 bg-accent/50 border-none rounded-xl h-9 text-xs">
-                <SelectValue placeholder="Charger Speed" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Speeds</SelectItem>
-                <SelectItem value="standard">Standard (&lt;11kW)</SelectItem>
-                <SelectItem value="fast">Fast (≥11kW)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="border-b border-border px-4 py-2.5 flex items-center gap-3">
+          <Select value={powerFilter} onValueChange={setPowerFilter}>
+            <SelectTrigger className="w-36 bg-accent border-border rounded-md h-8 text-xs">
+              <SelectValue placeholder="Charger Speed" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Speeds</SelectItem>
+              <SelectItem value="standard">Standard (&lt;11kW)</SelectItem>
+              <SelectItem value="fast">Fast (≥11kW)</SelectItem>
+            </SelectContent>
+          </Select>
           {osmLoading && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              Loading stations...
-            </div>
+            <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" /> Loading...
+            </span>
           )}
         </div>
       )}
 
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <div className="w-[380px] border-r border-border/50 overflow-y-auto p-4 space-y-3 hidden lg:block bg-background/50">
-          {/* Nearby alert */}
+        <div className="w-[360px] border-r border-border overflow-y-auto p-4 space-y-2 hidden lg:block">
           {nearbyCount > 0 && (
-            <div className="glass-card rounded-2xl p-4 flex items-center gap-3 border-glow mb-4 animate-fade-in">
-              <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-                <Bell className="w-5 h-5 text-secondary" />
-              </div>
+            <div className="rounded-md border border-border p-3 flex items-center gap-3 mb-3">
+              <Bell className="w-4 h-4 text-secondary shrink-0" />
               <div>
-                <p className="text-sm font-semibold">{nearbyCount} chargers within 1 km</p>
-                <p className="text-xs text-muted-foreground">Community charging available nearby</p>
+                <p className="text-sm font-medium">{nearbyCount} chargers within 1 km</p>
+                <p className="text-xs text-muted-foreground">Community charging nearby</p>
               </div>
             </div>
           )}
 
           {/* Smart recommendation */}
           {recommendedCharger && (
-            <div className="mb-4">
-              <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Zap className="w-3 h-3" /> Best Charger Near You
-              </p>
+            <div className="mb-3">
+              <p className="text-xs font-medium text-primary mb-1.5">Best Charger Near You</p>
               <ChargerCard charger={recommendedCharger} compact recommended onSelect={(c) => {
                 if (c.source === "voltshare") navigate(`/charger/${c.id}`);
                 else setSelected(c);
@@ -423,15 +414,15 @@ const Explore = () => {
           <div ref={mapContainerRef} className="h-full w-full" />
 
           {/* Map legend */}
-          <div className="absolute top-4 left-4 z-[1000]">
-            <div className="glass rounded-xl px-3.5 py-2.5 space-y-1.5">
+          <div className="absolute top-3 left-3 z-[1000]">
+            <div className="bg-card border border-border rounded-md px-3 py-2 space-y-1">
               {[
                 { color: "bg-secondary", label: "Available" },
                 { color: "bg-destructive", label: "Busy" },
                 { color: "bg-muted-foreground", label: "Unknown" },
               ].map((l) => (
                 <div key={l.label} className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                  <span className={cn("w-2.5 h-2.5 rounded-full", l.color)} />
+                  <span className={cn("w-2 h-2 rounded-full", l.color)} />
                   {l.label}
                 </div>
               ))}
@@ -439,7 +430,7 @@ const Explore = () => {
           </div>
 
           {/* Mobile bottom sheet */}
-          <div className="lg:hidden absolute bottom-0 left-0 right-0 glass rounded-t-2xl max-h-[40vh] overflow-y-auto p-4 space-y-3">
+          <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-background border-t border-border rounded-t-lg max-h-[40vh] overflow-y-auto p-3 space-y-2">
             {allChargers.slice(0, 10).map((c) => (
               <ChargerCard key={c.id} charger={c} compact onSelect={(ch) => {
                 setSelected(ch);
