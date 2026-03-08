@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
+import TripPlanner from "./pages/TripPlanner";
 import DriverDashboard from "./pages/DriverDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import Auth from "./pages/Auth";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<><Index /><Footer /></>} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/trip-planner" element={<TripPlanner />} />
             <Route path="/driver" element={<><DriverDashboard /><Footer /></>} />
             <Route path="/host" element={<><HostDashboard /><Footer /></>} />
             <Route path="/auth" element={<Auth />} />
