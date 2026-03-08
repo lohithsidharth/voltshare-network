@@ -9,7 +9,7 @@ import { useChargers, Charger } from "@/hooks/useChargers";
 import ChargerCard from "@/components/ChargerCard";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal, LocateFixed, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal, LocateFixed, Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
