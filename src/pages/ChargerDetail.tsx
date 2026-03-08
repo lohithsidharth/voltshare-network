@@ -10,31 +10,10 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
-  MapPin, Star, Calendar as CalendarIcon, Navigation, Loader2, Lock, Heart, CreditCard,
+  MapPin, Star, Calendar as CalendarIcon, Navigation, Loader2, Lock, Heart,
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
-function useRazorpayScript() {
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    if (document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
-      setLoaded(true);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => setLoaded(true);
-    document.body.appendChild(script);
-  }, []);
-  return loaded;
-}
 
 interface ChargerDetail {
   id: string; title: string; address: string; latitude: number; longitude: number;
@@ -60,7 +39,7 @@ const ChargerDetailPage = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const razorpayReady = useRazorpayScript();
+  
   const [charger, setCharger] = useState<ChargerDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,16 +109,14 @@ const ChargerDetailPage = () => {
     if (!charger || !date || !startSlot || !endSlot) return;
     const estimatedPrice = getPrice();
     if (estimatedPrice <= 0) { toast.error("Select valid time slots"); return; }
-    if (!razorpayReady) { toast.error("Payment gateway loading, please wait..."); return; }
 
     setBooking(true);
 
     try {
-      // Step 1: Create booking with pending status
       const { data: bookingData, error: bookingError } = await supabase.from("bookings").insert({
         charger_id: charger.id, driver_id: user.id, booking_date: format(date, "yyyy-MM-dd"),
         start_time: startSlot, end_time: endSlot, estimated_price: estimatedPrice,
-        status: "pending", payment_status: "pending",
+        status: "confirmed", payment_status: "pending",
       }).select("id").single();
 
       if (bookingError) {
@@ -148,77 +125,13 @@ const ChargerDetailPage = () => {
         return;
       }
 
-      // Step 2: Create Razorpay order via Edge Function
-      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
-        body: { amount: estimatedPrice, booking_id: bookingData.id, charger_title: charger.title },
-      });
+      toast.success("Booking confirmed!");
 
-      if (orderError || !orderData?.order_id) {
-        toast.error("Failed to create payment order. Please try again.");
-        // Cancel the pending booking
-        await supabase.from("bookings").update({ status: "cancelled" }).eq("id", bookingData.id);
-        setBooking(false);
-        return;
-      }
-
-      // Step 3: Open Razorpay Checkout
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "VoltShare",
-        description: `${charger.title} — ${startSlot} to ${endSlot}`,
-        order_id: orderData.order_id,
-        prefill: {
-          email: user.email || "",
-          name: profile?.display_name || "",
-        },
-        theme: {
-          color: "#22c55e",
-        },
-        handler: async (response: any) => {
-          // Step 4: Verify payment on server
-          try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                booking_id: bookingData.id,
-              },
-            });
-
-            if (verifyError || !verifyData?.success) {
-              toast.error("Payment verification failed. Contact support.");
-              return;
-            }
-
-            toast.success("Payment successful! Booking confirmed.");
-            // Fetch access code
-            setTimeout(async () => {
-              const { data: ac } = await supabase.from("access_codes").select("code, valid_until").eq("booking_id", bookingData.id).single();
-              if (ac) setAccessCode(ac.code);
-            }, 1500);
-          } catch (err) {
-            toast.error("Payment verification error. Contact support.");
-          }
-        },
-        modal: {
-          ondismiss: async () => {
-            // User closed checkout without paying — cancel booking
-            await supabase.from("bookings").update({ status: "cancelled" }).eq("id", bookingData.id);
-            toast("Payment cancelled. Booking was not confirmed.");
-          },
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", async (response: any) => {
-        console.error("Payment failed:", response.error);
-        await supabase.from("bookings").update({ status: "cancelled", payment_status: "failed" }).eq("id", bookingData.id);
-        toast.error(`Payment failed: ${response.error.description}`);
-      });
-      rzp.open();
+      // Fetch access code
+      setTimeout(async () => {
+        const { data: ac } = await supabase.from("access_codes").select("code, valid_until").eq("booking_id", bookingData.id).single();
+        if (ac) setAccessCode(ac.code);
+      }, 1500);
     } catch (err) {
       console.error("Booking error:", err);
       toast.error("Something went wrong. Please try again.");
@@ -389,8 +302,8 @@ const ChargerDetailPage = () => {
                       <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{startSlot} – {endSlot} · {charger.power} kW</p>
                     </div>
                     <Button className="rounded-sm font-mono text-[11px] tracking-wider" onClick={handleBook} disabled={booking}>
-                      {booking ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <CreditCard className="w-3.5 h-3.5 mr-1" />}
-                      PAY & BOOK
+                      {booking ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Lock className="w-3.5 h-3.5 mr-1" />}
+                      CONFIRM BOOKING
                     </Button>
                   </div>
                 )}
