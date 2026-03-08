@@ -77,6 +77,7 @@ const userIcon = new L.DivIcon({
 });
 
 const Explore = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [powerFilter, setPowerFilter] = useState("all");
   const [selected, setSelected] = useState<Charger | null>(null);
