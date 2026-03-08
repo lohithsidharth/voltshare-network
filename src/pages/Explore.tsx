@@ -32,7 +32,7 @@ type AvailStatus = "available" | "occupied" | "unknown";
 
 function getAvailabilityStatus(charger: Charger): AvailStatus {
   if (charger.source === "osm") return "unknown";
-  if (charger.source === "ocm") {
+  if ((charger as any).source === "ocm") {
     const s = (charger as any).ocmStatus;
     if (s === "available") return "available";
     if (s === "unavailable") return "occupied";
