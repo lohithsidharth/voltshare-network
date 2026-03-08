@@ -3,9 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Zap, Car, Home, Phone, Mail, ArrowLeft } from "lucide-react";
+import { Car, Home, Phone, Mail, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,140 +22,79 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<"driver" | "host">("driver");
   const [loading, setLoading] = useState(false);
-
-  // Phone OTP state
   const [phone, setPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
-  
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const { error } = await signIn(email, password);
     setLoading(false);
-    if (error) {
-      toast({ variant: "destructive", title: "Login failed", description: error });
-    } else {
-      navigate("/");
-    }
+    if (error) { toast({ variant: "destructive", title: "Login failed", description: error }); }
+    else { navigate("/"); }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!displayName.trim()) {
-      toast({ variant: "destructive", title: "Name required", description: "Please enter your name." });
-      return;
-    }
+    if (!displayName.trim()) { toast({ variant: "destructive", title: "Name required" }); return; }
     setLoading(true);
     const { error } = await signUp(email, password, displayName, role);
     setLoading(false);
-    if (error) {
-      toast({ variant: "destructive", title: "Signup failed", description: error });
-    } else {
-      toast({ title: "Account created!", description: "You're now logged in." });
-      navigate(role === "host" ? "/host" : "/driver");
-    }
+    if (error) { toast({ variant: "destructive", title: "Signup failed", description: error }); }
+    else { toast({ title: "Account created!" }); navigate(role === "host" ? "/host" : "/driver"); }
   };
 
   const handleSendOTP = async () => {
     const formatted = phone.startsWith("+") ? phone : `+91${phone}`;
-    if (!/^\+\d{10,15}$/.test(formatted)) {
-      toast({ variant: "destructive", title: "Invalid phone", description: "Enter a valid phone number (e.g. +919876543210)" });
-      return;
-    }
+    if (!/^\+\d{10,15}$/.test(formatted)) { toast({ variant: "destructive", title: "Invalid phone" }); return; }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("phone-otp", {
-        body: { action: "send", phone: formatted },
-      });
+      const { data, error } = await supabase.functions.invoke("phone-otp", { body: { action: "send", phone: formatted } });
       if (error) throw error;
-      if (data?.error) {
-        toast({ variant: "destructive", title: "Failed", description: data.error });
-      } else {
-        setOtpSent(true);
-        setPhone(formatted);
-        toast({ title: "OTP Sent!", description: `A 6-digit code was sent to ${formatted}` });
-      }
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message || "Failed to send OTP" });
-    }
+      if (data?.error) { toast({ variant: "destructive", title: "Failed", description: data.error }); }
+      else { setOtpSent(true); setPhone(formatted); toast({ title: "OTP sent" }); }
+    } catch (err: any) { toast({ variant: "destructive", title: "Error", description: err.message }); }
     setLoading(false);
   };
 
   const handleVerifyOTP = async () => {
-    if (otp.length !== 6) {
-      toast({ variant: "destructive", title: "Invalid OTP", description: "Enter the 6-digit code" });
-      return;
-    }
+    if (otp.length !== 6) { toast({ variant: "destructive", title: "Enter 6-digit code" }); return; }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("phone-otp", {
-        body: {
-          action: "verify",
-          phone,
-          code: otp,
-          display_name: displayName || phone,
-          role: tab === "signup" ? role : undefined,
-        },
+        body: { action: "verify", phone, code: otp, display_name: displayName || phone, role: tab === "signup" ? role : undefined },
       });
       if (error) throw error;
-      if (data?.error) {
-        toast({ variant: "destructive", title: "Verification failed", description: data.error });
-      } else if (data?.verification_url) {
-        // Use the magic link to establish a real Supabase session
+      if (data?.error) { toast({ variant: "destructive", title: "Failed", description: data.error }); }
+      else if (data?.verification_url) {
         const url = new URL(data.verification_url);
         const token = url.searchParams.get("token");
         if (token) {
-          const { error: verifyError } = await supabase.auth.verifyOtp({
-            token_hash: token,
-            type: "magiclink",
-          });
-          if (verifyError) {
-            toast({ variant: "destructive", title: "Session error", description: verifyError.message });
-          } else {
-            toast({ title: "Welcome!", description: "You're now logged in." });
-            navigate("/");
-          }
+          const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: token, type: "magiclink" });
+          if (verifyError) { toast({ variant: "destructive", title: "Session error", description: verifyError.message }); }
+          else { toast({ title: "Welcome!" }); navigate("/"); }
         }
       }
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message || "Verification failed" });
-    }
+    } catch (err: any) { toast({ variant: "destructive", title: "Error", description: err.message }); }
     setLoading(false);
   };
 
-  const resetPhone = () => {
-    setOtpSent(false);
-    setOtp("");
-    
-  };
+  const resetPhone = () => { setOtpSent(false); setOtp(""); };
 
   const roleSelector = (
     <div>
-      <Label className="mb-2 block">I want to...</Label>
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => setRole("driver")}
-          className={`p-4 rounded-xl border-2 text-center transition-all ${
-            role === "driver" ? "border-primary bg-primary/10" : "border-border hover:border-muted-foreground/30"
-          }`}
-        >
-          <Car className={`w-8 h-8 mx-auto mb-2 ${role === "driver" ? "text-primary" : "text-muted-foreground"}`} />
-          <p className="font-heading font-semibold text-sm">Find Chargers</p>
-          <p className="text-xs text-muted-foreground mt-1">EV Driver</p>
+      <Label className="mb-2 block font-mono text-[11px] tracking-wider">ROLE</Label>
+      <div className="grid grid-cols-2 gap-px bg-border">
+        <button type="button" onClick={() => setRole("driver")}
+          className={`p-4 text-center ${role === "driver" ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground"}`}>
+          <Car className="w-5 h-5 mx-auto mb-1.5" />
+          <p className="font-mono text-[10px] tracking-wider">DRIVER</p>
         </button>
-        <button
-          type="button"
-          onClick={() => setRole("host")}
-          className={`p-4 rounded-xl border-2 text-center transition-all ${
-            role === "host" ? "border-secondary bg-secondary/10" : "border-border hover:border-muted-foreground/30"
-          }`}
-        >
-          <Home className={`w-8 h-8 mx-auto mb-2 ${role === "host" ? "text-secondary" : "text-muted-foreground"}`} />
-          <p className="font-heading font-semibold text-sm">Share Charger</p>
-          <p className="text-xs text-muted-foreground mt-1">Host</p>
+        <button type="button" onClick={() => setRole("host")}
+          className={`p-4 text-center ${role === "host" ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground"}`}>
+          <Home className="w-5 h-5 mx-auto mb-1.5" />
+          <p className="font-mono text-[10px] tracking-wider">HOST</p>
         </button>
       </div>
     </div>
@@ -167,151 +105,90 @@ const Auth = () => {
       {!otpSent ? (
         <>
           {tab === "signup" && (
-            <div>
-              <Label>Full Name</Label>
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1" placeholder="Your name" />
-            </div>
+            <div><Label className="font-mono text-[11px] tracking-wider">NAME</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1 rounded-sm bg-card" placeholder="Your name" /></div>
           )}
           <div>
-            <Label>Phone Number</Label>
-            <Input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="mt-1"
-              placeholder="+919876543210"
-            />
-            <p className="text-xs text-muted-foreground mt-1">Include country code (e.g. +91 for India)</p>
+            <Label className="font-mono text-[11px] tracking-wider">PHONE</Label>
+            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 rounded-sm bg-card" placeholder="+919876543210" />
           </div>
           {tab === "signup" && roleSelector}
-          <Button className="w-full" onClick={handleSendOTP} disabled={loading}>
-            {loading ? "Sending OTP..." : "Send OTP"}
+          <Button className="w-full rounded-sm font-mono text-[11px] tracking-wider" onClick={handleSendOTP} disabled={loading}>
+            {loading ? "SENDING..." : "SEND OTP"}
           </Button>
         </>
       ) : (
         <>
-          <button onClick={resetPhone} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Change number
+          <button onClick={resetPhone} className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-3 h-3" /> CHANGE NUMBER
           </button>
-          <p className="text-sm text-muted-foreground">
-            Enter the 6-digit code sent to <span className="text-foreground font-medium">{phone}</span>
-          </p>
-
+          <p className="text-sm text-muted-foreground">Code sent to <span className="text-foreground font-mono">{phone}</span></p>
           <div className="flex justify-center">
             <InputOTP maxLength={6} value={otp} onChange={setOtp}>
               <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-                <InputOTPSlot index={5} />
+                <InputOTPSlot index={0} /><InputOTPSlot index={1} /><InputOTPSlot index={2} />
+                <InputOTPSlot index={3} /><InputOTPSlot index={4} /><InputOTPSlot index={5} />
               </InputOTPGroup>
             </InputOTP>
           </div>
-
-          <Button className="w-full" onClick={handleVerifyOTP} disabled={loading || otp.length !== 6}>
-            {loading ? "Verifying..." : "Verify & Sign In"}
+          <Button className="w-full rounded-sm font-mono text-[11px] tracking-wider" onClick={handleVerifyOTP} disabled={loading || otp.length !== 6}>
+            {loading ? "VERIFYING..." : "VERIFY"}
           </Button>
-
-          <Button variant="ghost" size="sm" className="w-full" onClick={handleSendOTP} disabled={loading}>
-            Resend OTP
-          </Button>
+          <Button variant="ghost" size="sm" className="w-full font-mono text-[10px]" onClick={handleSendOTP} disabled={loading}>RESEND</Button>
         </>
       )}
     </div>
   );
 
   return (
-    <div className="min-h-screen pt-20 flex items-center justify-center px-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/8 blur-[120px]" />
-      </div>
-
-      <Card className="w-full max-w-md glass border-border relative z-10">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center glow-primary mb-4">
-            <Zap className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <CardTitle className="font-heading text-2xl">
-            Welcome to Volt<span className="text-secondary">Share</span>
-          </CardTitle>
-          <CardDescription>Sign in or create an account to get started</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen pt-12 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm border border-border bg-card">
+        <div className="border-b border-border p-6 text-center">
+          <p className="font-mono text-[11px] tracking-[0.2em] text-primary mb-2">VOLTSHARE</p>
+          <h1 className="font-heading text-xl font-bold">Welcome</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sign in or create an account</p>
+        </div>
+        <div className="p-6">
           <Tabs value={tab} onValueChange={(v) => { setTab(v as "login" | "signup"); resetPhone(); }}>
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-4 rounded-sm">
+              <TabsTrigger value="login" className="rounded-sm font-mono text-[11px] tracking-wider">LOGIN</TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-sm font-mono text-[11px] tracking-wider">SIGN UP</TabsTrigger>
             </TabsList>
 
-            {/* Method toggle */}
-            <div className="flex gap-2 mb-6">
-              <button
-                onClick={() => { setMethod("email"); resetPhone(); }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
-                  method === "email" ? "bg-primary/10 text-primary border border-primary/30" : "bg-muted text-muted-foreground border border-transparent"
-                }`}
-              >
-                <Mail className="w-4 h-4" /> Email
+            <div className="grid grid-cols-2 gap-px bg-border mb-5">
+              <button onClick={() => { setMethod("email"); resetPhone(); }}
+                className={`flex items-center justify-center gap-1.5 py-2 text-[10px] font-mono tracking-wider ${method === "email" ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground"}`}>
+                <Mail className="w-3 h-3" /> EMAIL
               </button>
-              <button
-                onClick={() => setMethod("phone")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
-                  method === "phone" ? "bg-primary/10 text-primary border border-primary/30" : "bg-muted text-muted-foreground border border-transparent"
-                }`}
-              >
-                <Phone className="w-4 h-4" /> Phone OTP
+              <button onClick={() => setMethod("phone")}
+                className={`flex items-center justify-center gap-1.5 py-2 text-[10px] font-mono tracking-wider ${method === "phone" ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground"}`}>
+                <Phone className="w-3 h-3" /> PHONE
               </button>
             </div>
 
             <TabsContent value="login">
               {method === "email" ? (
                 <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
-                    <Label>Email</Label>
-                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" placeholder="you@email.com" />
-                  </div>
-                  <div>
-                    <Label>Password</Label>
-                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" placeholder="••••••••" />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Signing in..." : "Sign In"}
-                  </Button>
+                  <div><Label className="font-mono text-[11px] tracking-wider">EMAIL</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1 rounded-sm bg-background" /></div>
+                  <div><Label className="font-mono text-[11px] tracking-wider">PASSWORD</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1 rounded-sm bg-background" /></div>
+                  <Button type="submit" className="w-full rounded-sm font-mono text-[11px] tracking-wider" disabled={loading}>{loading ? "..." : "SIGN IN"}</Button>
                 </form>
-              ) : (
-                phoneOTPFlow
-              )}
+              ) : phoneOTPFlow}
             </TabsContent>
 
             <TabsContent value="signup">
               {method === "email" ? (
                 <form onSubmit={handleSignup} className="space-y-4">
-                  <div>
-                    <Label>Full Name</Label>
-                    <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required className="mt-1" placeholder="Your name" />
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" placeholder="you@email.com" />
-                  </div>
-                  <div>
-                    <Label>Password</Label>
-                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="mt-1" placeholder="Min 6 characters" />
-                  </div>
+                  <div><Label className="font-mono text-[11px] tracking-wider">NAME</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required className="mt-1 rounded-sm bg-background" /></div>
+                  <div><Label className="font-mono text-[11px] tracking-wider">EMAIL</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1 rounded-sm bg-background" /></div>
+                  <div><Label className="font-mono text-[11px] tracking-wider">PASSWORD</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="mt-1 rounded-sm bg-background" /></div>
                   {roleSelector}
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Creating account..." : "Create Account"}
-                  </Button>
+                  <Button type="submit" className="w-full rounded-sm font-mono text-[11px] tracking-wider" disabled={loading}>{loading ? "..." : "CREATE ACCOUNT"}</Button>
                 </form>
-              ) : (
-                phoneOTPFlow
-              )}
+              ) : phoneOTPFlow}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

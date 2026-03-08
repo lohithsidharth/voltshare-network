@@ -11,15 +11,14 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Search, SlidersHorizontal, LocateFixed, Loader2, Zap,
-  Star, IndianRupee, Battery, X, Bell,
+  Search, SlidersHorizontal, LocateFixed, Loader2,
+  Battery, X,
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-// Fix leaflet default icon
 delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
@@ -38,42 +37,36 @@ function getAvailabilityStatus(charger: Charger): AvailStatus {
 }
 
 const statusColors: Record<AvailStatus, string> = {
-  available: "hsl(135,100%,55%)",
-  occupied: "hsl(0,84%,60%)",
-  unknown: "hsl(215,18%,55%)",
+  available: "hsl(145,100%,42%)",
+  occupied: "hsl(0,65%,50%)",
+  unknown: "hsl(0,0%,45%)",
 };
 
 function makeVoltshareIcon(status: AvailStatus) {
-  const dot = statusColors[status];
+  const c = statusColors[status];
   return new L.DivIcon({
-    html: `<div style="position:relative;background:hsl(213,100%,50%);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid hsla(0,0%,100%,0.2);">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      <span style="position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:${dot};border:2px solid hsl(222,47%,7%);"></span>
-    </div>`,
+    html: `<div style="width:10px;height:10px;border-radius:1px;background:${c};border:2px solid hsl(0,0%,4%);"></div>`,
     className: "",
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [10, 10],
+    iconAnchor: [5, 5],
   });
 }
 
 function makeOsmIcon(status: AvailStatus) {
-  const dot = statusColors[status];
+  const c = statusColors[status];
   return new L.DivIcon({
-    html: `<div style="position:relative;background:hsl(38,92%,50%);width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid hsla(0,0%,100%,0.15);">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      <span style="position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:${dot};border:2px solid hsl(222,47%,7%);"></span>
-    </div>`,
+    html: `<div style="width:8px;height:8px;border-radius:50%;background:${c};border:2px solid hsl(0,0%,4%);opacity:0.7;"></div>`,
     className: "",
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [8, 8],
+    iconAnchor: [4, 4],
   });
 }
 
 const userIcon = new L.DivIcon({
-  html: `<div style="background:hsl(213,100%,50%);width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>`,
+  html: `<div style="width:10px;height:10px;border-radius:50%;background:hsl(145,100%,42%);border:2px solid white;"></div>`,
   className: "",
-  iconSize: [14, 14],
-  iconAnchor: [7, 7],
+  iconSize: [10, 10],
+  iconAnchor: [5, 5],
 });
 
 const Explore = () => {
@@ -113,31 +106,17 @@ const Explore = () => {
       return true;
     })
     .map((c) => ({
-      id: c.id,
-      host_id: "",
-      title: c.name,
-      address: c.address || "OpenStreetMap",
-      latitude: c.lat,
-      longitude: c.lng,
-      power: c.power || 0,
-      price_per_kwh: 0,
-      availability: null,
-      rating: null,
-      review_count: null,
-      images: null,
-      is_active: true,
-      source: "osm" as const,
-      operator: c.operator,
-      socket_types: c.socket_types,
+      id: c.id, host_id: "", title: c.name, address: c.address || "OpenStreetMap",
+      latitude: c.lat, longitude: c.lng, power: c.power || 0, price_per_kwh: 0,
+      availability: null, rating: null, review_count: null, images: null,
+      is_active: true, source: "osm" as const, operator: c.operator, socket_types: c.socket_types,
     }));
 
   const allChargers = [...voltshareChargers, ...osmAsChargers];
 
-  // Smart matching
   const recommendedCharger = useMemo(() => {
     const available = allChargers.filter(c => c.source === "voltshare" && c.is_active);
     if (available.length === 0 || (userLat == null && userLng == null)) return null;
-
     const scored = available.map(c => {
       let score = 0;
       if (userLat != null && userLng != null) {
@@ -149,21 +128,9 @@ const Explore = () => {
       if (c.rating) score += c.rating * 4;
       return { charger: c, score };
     });
-
     scored.sort((a, b) => b.score - a.score);
     return scored[0]?.charger || null;
   }, [allChargers, userLat, userLng]);
-
-  const fetchForBounds = useCallback(() => {
-    if (!mapRef.current) return;
-    const bounds = mapRef.current.getBounds();
-    fetchOSMChargers({
-      south: bounds.getSouth(),
-      west: bounds.getWest(),
-      north: bounds.getNorth(),
-      east: bounds.getEast(),
-    });
-  }, [fetchOSMChargers]);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -178,31 +145,19 @@ const Explore = () => {
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
-
-    const map = L.map(mapContainerRef.current, {
-      center: [12.9716, 77.5946],
-      zoom: 12,
-      zoomControl: false,
-    });
-
+    const map = L.map(mapContainerRef.current, { center: [12.9716, 77.5946], zoom: 12, zoomControl: false });
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      attribution: '&copy; OSM &copy; CARTO',
     }).addTo(map);
-
     L.control.zoom({ position: "bottomright" }).addTo(map);
-
     mapRef.current = map;
     clusterGroupRef.current = L.markerClusterGroup({
-      maxClusterRadius: 50,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,
+      maxClusterRadius: 50, spiderfyOnMaxZoom: true, showCoverageOnHover: false,
       iconCreateFunction: (cluster) => {
         const count = cluster.getChildCount();
         return L.divIcon({
-          html: `<div style="background:hsl(213,100%,50%);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:13px;font-family:Outfit,sans-serif;border:2px solid hsla(0,0%,100%,0.15);">${count}</div>`,
-          className: "",
-          iconSize: [36, 36],
-          iconAnchor: [18, 18],
+          html: `<div style="background:hsl(145,100%,42%);width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:hsl(0,0%,2%);font-weight:600;font-size:11px;font-family:'JetBrains Mono',monospace;">${count}</div>`,
+          className: "", iconSize: [28, 28], iconAnchor: [14, 14],
         });
       },
     });
@@ -213,75 +168,45 @@ const Explore = () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         const bounds = map.getBounds();
-        fetchOSMChargers({
-          south: bounds.getSouth(),
-          west: bounds.getWest(),
-          north: bounds.getNorth(),
-          east: bounds.getEast(),
-        });
+        fetchOSMChargers({ south: bounds.getSouth(), west: bounds.getWest(), north: bounds.getNorth(), east: bounds.getEast() });
       }, 500);
     };
     map.on("moveend", onMoveEnd);
-
     setTimeout(() => {
       const bounds = map.getBounds();
-      fetchOSMChargers({
-        south: bounds.getSouth(),
-        west: bounds.getWest(),
-        north: bounds.getNorth(),
-        east: bounds.getEast(),
-      });
+      fetchOSMChargers({ south: bounds.getSouth(), west: bounds.getWest(), north: bounds.getNorth(), east: bounds.getEast() });
     }, 300);
 
-    return () => {
-      clearTimeout(debounceTimer);
-      map.off("moveend", onMoveEnd);
-      map.remove();
-      mapRef.current = null;
-      clusterGroupRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { clearTimeout(debounceTimer); map.off("moveend", onMoveEnd); map.remove(); mapRef.current = null; clusterGroupRef.current = null; };
   }, []);
 
   useEffect(() => {
     if (!mapRef.current || userLat == null || userLng == null) return;
-    if (userMarkerRef.current) {
-      userMarkerRef.current.setLatLng([userLat, userLng]);
-    } else {
-      userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon })
-        .bindPopup("<div class='font-heading font-semibold text-sm'>You are here</div>")
-        .addTo(mapRef.current);
-    }
+    if (userMarkerRef.current) { userMarkerRef.current.setLatLng([userLat, userLng]); }
+    else { userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon }).addTo(mapRef.current); }
     mapRef.current.setView([userLat, userLng], 13);
   }, [userLat, userLng]);
 
   useEffect(() => {
     if (!mapRef.current || !clusterGroupRef.current) return;
     clusterGroupRef.current.clearLayers();
-
     allChargers.forEach((c) => {
       const status = getAvailabilityStatus(c);
       const icon = c.source === "osm" ? makeOsmIcon(status) : makeVoltshareIcon(status);
       const marker = L.marker([c.latitude, c.longitude], { icon });
-      const sourceTag = c.source === "osm"
-        ? `<span style="background:hsl(38,92%,50%,0.15);color:hsl(38,92%,50%);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;">OSM</span>`
-        : `<span style="background:hsl(213,100%,50%,0.15);color:hsl(213,100%,50%);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;">VoltShare</span>`;
-      const statusLabel = status === "available" ? `<span style="color:hsl(135,100%,55%)">● Available</span>` : status === "occupied" ? `<span style="color:hsl(0,84%,60%)">● Busy</span>` : `<span style="color:hsl(215,18%,55%)">● Unknown</span>`;
-      const priceInfo = c.source === "voltshare" && c.price_per_kwh > 0 ? `<span>₹${c.price_per_kwh}/kWh</span>` : "";
-      const bookBtn = c.source === "voltshare" ? `<div style="margin-top:8px;"><a href="/charger/${c.id}" style="display:inline-block;background:hsl(213,100%,50%);color:white;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">Book Now</a></div>` : "";
+      const statusText = status === "available" ? "ONLINE" : status === "occupied" ? "BUSY" : "UNKNOWN";
+      const statusColor = status === "available" ? "hsl(145,100%,42%)" : status === "occupied" ? "hsl(0,65%,50%)" : "hsl(0,0%,45%)";
+      const bookBtn = c.source === "voltshare" ? `<a href="/charger/${c.id}" style="display:inline-block;background:hsl(145,100%,42%);color:hsl(0,0%,2%);padding:4px 12px;font-size:10px;font-weight:600;text-decoration:none;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;margin-top:8px;">BOOK</a>` : "";
       marker.bindPopup(`
-        <div style="min-width:210px;padding:4px;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-            ${sourceTag}
-            <h3 style="margin:0;font-size:14px;font-weight:700;font-family:Outfit,sans-serif;">${c.title}</h3>
+        <div style="min-width:180px;padding:2px;font-family:'Inter',sans-serif;">
+          <p style="margin:0;font-size:13px;font-weight:600;font-family:'Space Grotesk',sans-serif;">${c.title}</p>
+          <p style="margin:2px 0 6px;font-size:10px;color:hsl(0,0%,45%);">${c.address}</p>
+          <p style="margin:0;font-size:10px;font-weight:600;color:${statusColor};font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;">${statusText}</p>
+          <div style="font-size:11px;color:hsl(0,0%,60%);margin-top:4px;display:flex;gap:8px;">
+            ${c.power > 0 ? `<span>${c.power}kW</span>` : ""}
+            ${c.source === "voltshare" && c.price_per_kwh > 0 ? `<span>₹${c.price_per_kwh}/kWh</span>` : ""}
+            ${c.rating ? `<span>★${c.rating}</span>` : ""}
           </div>
-          <div style="font-size:11px;margin-bottom:8px;font-weight:600;">${statusLabel}</div>
-          <div style="font-size:12px;opacity:.7;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-            ${c.power > 0 ? `<span>⚡ ${c.power}kW</span>` : ""}
-            ${priceInfo}
-            ${c.rating ? `<span>★ ${c.rating}</span>` : ""}
-          </div>
-          <p style="margin:0;font-size:11px;opacity:.5;">${c.address}</p>
           ${bookBtn}
         </div>
       `);
@@ -301,77 +226,55 @@ const Explore = () => {
     }
   };
 
-  const nearbyCount = allChargers.filter(c => {
-    if (userLat == null || userLng == null) return false;
-    const dist = Math.sqrt(Math.pow(c.latitude - userLat, 2) + Math.pow(c.longitude - userLng, 2)) * 111;
-    return dist < 1;
-  }).length;
-
   return (
-    <div className="pt-14 h-screen flex flex-col">
-      {/* Search bar */}
-      <div className="border-b border-border px-4 py-2.5 flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+    <div className="pt-12 h-screen flex flex-col">
+      {/* Search */}
+      <div className="border-b border-border px-4 py-2 flex items-center gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search charger location..."
+            placeholder="Search location..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-accent border-border rounded-md h-9 text-sm"
+            className="pl-9 h-8 bg-card border-border rounded-sm text-sm font-mono"
           />
         </div>
         <Button
           variant="outline"
           size="sm"
-          className={cn("rounded-md gap-2 h-9", showFilters && "bg-accent text-foreground")}
+          className={cn("rounded-sm h-8 gap-1.5 text-[11px] font-mono", showFilters && "text-primary border-primary")}
           onClick={() => setShowFilters(!showFilters)}
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          Filters
+          <SlidersHorizontal className="w-3 h-3" />
+          FILTER
         </Button>
-        <Button variant="outline" size="icon" className="rounded-md h-9 w-9" onClick={handleLocateMe} disabled={locating}>
-          {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
+        <Button variant="outline" size="icon" className="rounded-sm h-8 w-8" onClick={handleLocateMe} disabled={locating}>
+          {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LocateFixed className="w-3.5 h-3.5" />}
         </Button>
       </div>
 
-      {/* Filter panel */}
       {showFilters && (
-        <div className="border-b border-border px-4 py-2.5 flex items-center gap-3">
+        <div className="border-b border-border px-4 py-2 flex items-center gap-2">
           <Select value={powerFilter} onValueChange={setPowerFilter}>
-            <SelectTrigger className="w-36 bg-accent border-border rounded-md h-8 text-xs">
-              <SelectValue placeholder="Charger Speed" />
+            <SelectTrigger className="w-32 bg-card border-border rounded-sm h-7 text-[11px] font-mono">
+              <SelectValue placeholder="Speed" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Speeds</SelectItem>
-              <SelectItem value="standard">Standard (&lt;11kW)</SelectItem>
-              <SelectItem value="fast">Fast (≥11kW)</SelectItem>
+              <SelectItem value="all">ALL</SelectItem>
+              <SelectItem value="standard">STANDARD</SelectItem>
+              <SelectItem value="fast">FAST</SelectItem>
             </SelectContent>
           </Select>
-          {osmLoading && (
-            <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1.5">
-              <Loader2 className="w-3 h-3 animate-spin" /> Loading...
-            </span>
-          )}
+          {osmLoading && <span className="text-[10px] font-mono text-muted-foreground ml-auto">LOADING...</span>}
         </div>
       )}
 
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <div className="w-[360px] border-r border-border overflow-y-auto p-4 space-y-2 hidden lg:block">
-          {nearbyCount > 0 && (
-            <div className="rounded-md border border-border p-3 flex items-center gap-3 mb-3">
-              <Bell className="w-4 h-4 text-secondary shrink-0" />
-              <div>
-                <p className="text-sm font-medium">{nearbyCount} chargers within 1 km</p>
-                <p className="text-xs text-muted-foreground">Community charging nearby</p>
-              </div>
-            </div>
-          )}
-
-          {/* Smart recommendation */}
+        <div className="w-[340px] border-r border-border overflow-y-auto hidden lg:block">
           {recommendedCharger && (
-            <div className="mb-3">
-              <p className="text-xs font-medium text-primary mb-1.5">Best Charger Near You</p>
+            <div className="border-b border-border p-3">
+              <p className="font-mono text-[10px] tracking-wider text-primary mb-2">▸ BEST MATCH</p>
               <ChargerCard charger={recommendedCharger} compact recommended onSelect={(c) => {
                 if (c.source === "voltshare") navigate(`/charger/${c.id}`);
                 else setSelected(c);
@@ -379,32 +282,32 @@ const Explore = () => {
             </div>
           )}
 
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-muted-foreground">
-              {isLoading ? "Searching..." : `${allChargers.length} chargers found`}
-            </p>
-            <div className="flex gap-2">
-              <span className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
-                <span className="w-2 h-2 rounded-sm bg-primary" />{voltshareChargers.length} VoltShare
-              </span>
-              <span className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
-                <span className="w-2 h-2 rounded-sm bg-volt-warning" />{osmAsChargers.length} OSM
-              </span>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <span className="font-mono text-[10px] tracking-wider text-muted-foreground">
+              {isLoading ? "SEARCHING..." : `${allChargers.length} RESULTS`}
+            </span>
+            <div className="flex gap-3 font-mono text-[10px] tracking-wider text-muted-foreground">
+              <span>{voltshareChargers.length} VS</span>
+              <span>{osmAsChargers.length} OSM</span>
             </div>
           </div>
 
-          {allChargers.map((c) => (
-            <ChargerCard key={c.id} charger={c} compact onSelect={(ch) => {
-              setSelected(ch);
-              if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
-            }} />
-          ))}
+          <div className="divide-y divide-border">
+            {allChargers.map((c) => (
+              <div key={c.id} className="p-2">
+                <ChargerCard charger={c} compact onSelect={(ch) => {
+                  setSelected(ch);
+                  if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
+                }} />
+              </div>
+            ))}
+          </div>
 
           {!isLoading && allChargers.length === 0 && (
-            <div className="text-center py-12">
-              <Battery className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground font-medium">No EV chargers nearby</p>
-              <p className="text-xs text-muted-foreground mt-1">Try expanding the search radius</p>
+            <div className="text-center py-16">
+              <Battery className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+              <p className="font-mono text-[11px] text-muted-foreground">NO CHARGERS FOUND</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Try expanding search radius</p>
             </div>
           )}
         </div>
@@ -413,41 +316,41 @@ const Explore = () => {
         <div className="flex-1 relative">
           <div ref={mapContainerRef} className="h-full w-full" />
 
-          {/* Map legend */}
-          <div className="absolute top-3 left-3 z-[1000]">
-            <div className="bg-card border border-border rounded-md px-3 py-2 space-y-1">
-              {[
-                { color: "bg-secondary", label: "Available" },
-                { color: "bg-destructive", label: "Busy" },
-                { color: "bg-muted-foreground", label: "Unknown" },
-              ].map((l) => (
-                <div key={l.label} className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                  <span className={cn("w-2 h-2 rounded-full", l.color)} />
-                  {l.label}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Mobile bottom sheet */}
-          <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-background border-t border-border rounded-t-lg max-h-[40vh] overflow-y-auto p-3 space-y-2">
-            {allChargers.slice(0, 10).map((c) => (
-              <ChargerCard key={c.id} charger={c} compact onSelect={(ch) => {
-                setSelected(ch);
-                if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
-              }} />
+          {/* Legend */}
+          <div className="absolute top-3 left-3 z-[1000] bg-card border border-border px-2.5 py-2 space-y-1">
+            {[
+              { color: "bg-primary", label: "ONLINE" },
+              { color: "bg-destructive", label: "BUSY" },
+              { color: "bg-muted-foreground", label: "UNKNOWN" },
+            ].map((l) => (
+              <div key={l.label} className="flex items-center gap-2 font-mono text-[9px] tracking-wider text-muted-foreground">
+                <span className={cn("w-2 h-2", l.color)} />
+                {l.label}
+              </div>
             ))}
           </div>
 
-          {/* Selected charger popup */}
+          {/* Mobile list */}
+          <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-background border-t border-border max-h-[35vh] overflow-y-auto divide-y divide-border">
+            {allChargers.slice(0, 8).map((c) => (
+              <div key={c.id} className="p-2">
+                <ChargerCard charger={c} compact onSelect={(ch) => {
+                  setSelected(ch);
+                  if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
+                }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Selected popup */}
           {selected && (
-            <div className="hidden md:block absolute right-4 top-4 w-80 z-[1000] animate-slide-in-right">
+            <div className="hidden md:block absolute right-3 top-3 w-72 z-[1000] animate-slide-in-right">
               <div className="relative">
                 <button
-                  className="absolute -top-2 -right-2 z-10 w-7 h-7 rounded-full bg-card border border-border flex items-center justify-center hover:bg-accent"
+                  className="absolute -top-1 -right-1 z-10 w-5 h-5 bg-card border border-border flex items-center justify-center"
                   onClick={() => setSelected(null)}
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
                 <ChargerCard charger={selected} onSelect={(ch) => {
                   if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);

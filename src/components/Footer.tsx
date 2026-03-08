@@ -1,20 +1,15 @@
 import { Link } from "react-router-dom";
-import { Zap } from "lucide-react";
 
 const Footer = () => (
-  <footer className="border-t border-border">
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2">
-          <Zap className="w-4 h-4 text-primary" />
-          <span className="font-heading text-sm font-bold">VoltShare</span>
-        </Link>
-        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-          <Link to="/explore" className="hover:text-foreground transition-colors">Explore</Link>
-          <Link to="/trip-planner" className="hover:text-foreground transition-colors">Trip Planner</Link>
-          <Link to="/host" className="hover:text-foreground transition-colors">Host</Link>
-        </div>
-        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} VoltShare</p>
+  <footer className="border-t border-border py-6">
+    <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <span className="font-mono text-[11px] tracking-wider text-muted-foreground">
+        VOLT<span className="text-primary">SHARE</span> © {new Date().getFullYear()}
+      </span>
+      <div className="flex gap-6 text-[11px] font-mono tracking-wider text-muted-foreground">
+        <Link to="/explore" className="hover:text-foreground transition-colors">MAP</Link>
+        <Link to="/trip-planner" className="hover:text-foreground transition-colors">ROUTES</Link>
+        <Link to="/host" className="hover:text-foreground transition-colors">HOST</Link>
       </div>
     </div>
   </footer>
