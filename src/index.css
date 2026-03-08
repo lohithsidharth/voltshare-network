@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,13 +6,13 @@
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
+    --background: 222 47% 7%;
     --foreground: 210 40% 96%;
 
-    --card: 222 47% 9%;
+    --card: 222 44% 10%;
     --card-foreground: 210 40% 96%;
 
-    --popover: 222 47% 9%;
+    --popover: 222 44% 10%;
     --popover-foreground: 210 40% 96%;
 
     --primary: 213 100% 50%;
@@ -21,17 +21,17 @@
     --secondary: 135 100% 55%;
     --secondary-foreground: 222 47% 6%;
 
-    --muted: 222 30% 14%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 222 28% 14%;
+    --muted-foreground: 215 18% 55%;
 
-    --accent: 222 30% 14%;
+    --accent: 222 28% 16%;
     --accent-foreground: 210 40% 96%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
+    --border: 222 25% 16%;
+    --input: 222 25% 16%;
     --ring: 213 100% 50%;
 
     --radius: 0.75rem;
@@ -47,30 +47,31 @@
 
     --volt-glow: 213 100% 50%;
     --neon: 135 100% 55%;
-    --navy: 222 47% 6%;
-    --navy-light: 222 47% 9%;
-    --surface: 210 20% 97%;
+    --navy: 222 47% 7%;
+    --navy-light: 222 44% 10%;
+    --surface: 210 40% 97%;
+    --warning: 38 92% 50%;
   }
 
   .dark {
-    --background: 222 47% 6%;
+    --background: 222 47% 7%;
     --foreground: 210 40% 96%;
-    --card: 222 47% 9%;
+    --card: 222 44% 10%;
     --card-foreground: 210 40% 96%;
-    --popover: 222 47% 9%;
+    --popover: 222 44% 10%;
     --popover-foreground: 210 40% 96%;
     --primary: 213 100% 50%;
     --primary-foreground: 0 0% 100%;
     --secondary: 135 100% 55%;
     --secondary-foreground: 222 47% 6%;
-    --muted: 222 30% 14%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 222 30% 14%;
+    --muted: 222 28% 14%;
+    --muted-foreground: 215 18% 55%;
+    --accent: 222 28% 16%;
     --accent-foreground: 210 40% 96%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
+    --border: 222 25% 16%;
+    --input: 222 25% 16%;
     --ring: 213 100% 50%;
     --sidebar-background: 222 47% 8%;
     --sidebar-foreground: 210 40% 96%;
@@ -87,40 +88,140 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground font-body antialiased;
   }
 }
 
-/* Glassmorphism utility */
+/* Glassmorphism */
 .glass {
-  background: hsla(222, 47%, 9%, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid hsla(222, 30%, 18%, 0.5);
+  background: hsla(222, 44%, 10%, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid hsla(222, 25%, 20%, 0.5);
 }
 
 .glass-light {
-  background: hsla(210, 20%, 97%, 0.08);
+  background: hsla(210, 20%, 97%, 0.06);
   backdrop-filter: blur(16px);
-  border: 1px solid hsla(222, 30%, 18%, 0.3);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsla(222, 25%, 20%, 0.25);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, hsla(222, 44%, 12%, 0.8) 0%, hsla(222, 44%, 8%, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid hsla(213, 100%, 50%, 0.1);
 }
 
 /* Glow effects */
 .glow-primary {
-  box-shadow: 0 0 40px -10px hsl(213 100% 50% / 0.4);
+  box-shadow: 0 0 30px -8px hsl(213 100% 50% / 0.5),
+              0 0 60px -16px hsl(213 100% 50% / 0.25);
 }
 
 .glow-neon {
-  box-shadow: 0 0 40px -10px hsl(135 100% 55% / 0.3);
+  box-shadow: 0 0 30px -8px hsl(135 100% 55% / 0.4),
+              0 0 60px -16px hsl(135 100% 55% / 0.2);
+}
+
+.glow-soft {
+  box-shadow: 0 4px 20px -4px hsl(213 100% 50% / 0.15);
 }
 
 .text-glow {
-  text-shadow: 0 0 30px hsl(213 100% 50% / 0.5);
+  text-shadow: 0 0 40px hsl(213 100% 50% / 0.5);
+}
+
+.text-glow-neon {
+  text-shadow: 0 0 40px hsl(135 100% 55% / 0.5);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(213, 100%, 50%) 0%, hsl(135, 100%, 55%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animated border */
+.border-glow {
+  position: relative;
+}
+.border-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, hsl(213, 100%, 50%, 0.3), hsl(135, 100%, 55%, 0.3), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Charging pulse animation */
+@keyframes charge-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes energy-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes marker-pulse {
+  0% { box-shadow: 0 0 0 0 hsl(135, 100%, 55%, 0.6); }
+  70% { box-shadow: 0 0 0 12px hsl(135, 100%, 55%, 0); }
+  100% { box-shadow: 0 0 0 0 hsl(135, 100%, 55%, 0); }
 }
 
 /* Leaflet overrides */
 .leaflet-container {
-  background: hsl(222, 47%, 6%) !important;
+  background: hsl(222, 47%, 7%) !important;
   border-radius: var(--radius);
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.leaflet-popup-content-wrapper {
+  background: hsla(222, 44%, 10%, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid hsla(222, 25%, 20%, 0.5) !important;
+  border-radius: 12px !important;
+  color: hsl(210, 40%, 96%) !important;
+  box-shadow: 0 8px 32px hsla(0, 0%, 0%, 0.4) !important;
+}
+
+.leaflet-popup-tip {
+  background: hsla(222, 44%, 10%, 0.95) !important;
+}
+
+.leaflet-popup-close-button {
+  color: hsl(215, 18%, 55%) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(222, 25%, 20%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(222, 25%, 28%);
+}
+
+/* Selection */
+::selection {
+  background: hsl(213, 100%, 50%, 0.3);
+  color: hsl(210, 40%, 96%);
 }
