@@ -38,7 +38,11 @@ export function useChargers({ search, powerFilter, lat, lng, radiusM = 10000 }: 
           max_results: 100,
         });
         if (error) throw error;
-        let results = (data ?? []) as Charger[];
+        let results = (data ?? []).map((d: any) => ({
+          ...d,
+          images: d.images ?? null,
+          is_active: d.is_active ?? true,
+        })) as Charger[];
         results = applyFilters(results, search, powerFilter);
         return results;
       }
