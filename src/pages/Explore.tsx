@@ -70,10 +70,10 @@ function makeOsmIcon(status: AvailStatus) {
 }
 
 const userIcon = new L.DivIcon({
-  html: `<div style="background:hsl(213,100%,50%);width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 20px hsl(213,100%,50%,0.5);"></div>`,
+  html: `<div style="background:hsl(213,100%,50%);width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>`,
   className: "",
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
 });
 
 const Explore = () => {
