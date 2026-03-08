@@ -36,14 +36,37 @@ Deno.serve(async (req) => {
       out body 50;
     `;
 
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `data=${encodeURIComponent(query)}`,
-    });
+    // Try with retry and fallback endpoints
+    const endpoints = [
+      "https://overpass-api.de/api/interpreter",
+      "https://overpass.kumi.systems/api/interpreter",
+    ];
 
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.status}`);
+    let response: Response | null = null;
+    for (const endpoint of endpoints) {
+      try {
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 8000);
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `data=${encodeURIComponent(query)}`,
+          signal: ctrl.signal,
+        });
+        clearTimeout(timeout);
+        if (response.ok) break;
+        response = null;
+      } catch {
+        response = null;
+      }
+    }
+
+    if (!response || !response.ok) {
+      // Return empty result instead of crashing
+      return new Response(
+        JSON.stringify({ success: true, count: 0, chargers: [], fallback: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
