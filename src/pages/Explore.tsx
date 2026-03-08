@@ -414,15 +414,15 @@ const Explore = () => {
           <div ref={mapContainerRef} className="h-full w-full" />
 
           {/* Map legend */}
-          <div className="absolute top-4 left-4 z-[1000]">
-            <div className="glass rounded-xl px-3.5 py-2.5 space-y-1.5">
+          <div className="absolute top-3 left-3 z-[1000]">
+            <div className="bg-card border border-border rounded-md px-3 py-2 space-y-1">
               {[
                 { color: "bg-secondary", label: "Available" },
                 { color: "bg-destructive", label: "Busy" },
                 { color: "bg-muted-foreground", label: "Unknown" },
               ].map((l) => (
                 <div key={l.label} className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                  <span className={cn("w-2.5 h-2.5 rounded-full", l.color)} />
+                  <span className={cn("w-2 h-2 rounded-full", l.color)} />
                   {l.label}
                 </div>
               ))}
