@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { lat, lng, radius = 10000 } = await req.json();
+    const { lat, lng, radius = 5000 } = await req.json();
 
     if (!lat || !lng) {
       return new Response(
