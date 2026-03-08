@@ -76,7 +76,6 @@ const Auth = () => {
       } else {
         setOtpSent(true);
         setPhone(formatted);
-        if (data?.dev_otp) setDevOtp(data.dev_otp);
         toast({ title: "OTP Sent!", description: `A 6-digit code was sent to ${formatted}` });
       }
     } catch (err: any) {
