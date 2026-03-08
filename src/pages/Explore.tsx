@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster";
+import { useOverpassChargers, OverpassCharger } from "@/hooks/useOverpassChargers";
 import { useChargers, Charger } from "@/hooks/useChargers";
 import ChargerCard from "@/components/ChargerCard";
 import { Input } from "@/components/ui/input";
@@ -58,17 +59,67 @@ const Explore = () => {
   const [userLng, setUserLng] = useState<number | null>(null);
   const [locating, setLocating] = useState(false);
 
-  const { data: chargers = [], isLoading } = useChargers({
+  // VoltShare chargers from DB
+  const { data: voltshareChargers = [], isLoading: vsLoading } = useChargers({
     search,
     powerFilter: powerFilter as "all" | "standard" | "fast",
     lat: userLat,
     lng: userLng,
   });
 
+  // OSM chargers from Overpass (bounds-based)
+  const { chargers: osmChargers, loading: osmLoading, fetchChargers: fetchOSMChargers } = useOverpassChargers();
+
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
+
+  const isLoading = vsLoading || osmLoading;
+
+  // Convert OSM chargers to Charger type for sidebar display
+  const osmAsChargers: Charger[] = osmChargers
+    .filter((c) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!c.name.toLowerCase().includes(q) && !(c.address || "").toLowerCase().includes(q)) return false;
+      }
+      if (powerFilter === "fast" && (c.power || 0) < 11) return false;
+      if (powerFilter === "standard" && (c.power || 0) >= 11) return false;
+      return true;
+    })
+    .map((c) => ({
+      id: c.id,
+      host_id: "",
+      title: c.name,
+      address: c.address || "OpenStreetMap",
+      latitude: c.lat,
+      longitude: c.lng,
+      power: c.power || 0,
+      price_per_kwh: 0,
+      availability: null,
+      rating: null,
+      review_count: null,
+      images: null,
+      is_active: true,
+      source: "osm" as const,
+      operator: c.operator,
+      socket_types: c.socket_types,
+    }));
+
+  const allChargers = [...voltshareChargers, ...osmAsChargers];
+
+  // Fetch OSM chargers based on current map bounds
+  const fetchForBounds = useCallback(() => {
+    if (!mapRef.current) return;
+    const bounds = mapRef.current.getBounds();
+    fetchOSMChargers({
+      south: bounds.getSouth(),
+      west: bounds.getWest(),
+      north: bounds.getNorth(),
+      east: bounds.getEast(),
+    });
+  }, [fetchOSMChargers]);
 
   // Detect user location on mount
   useEffect(() => {
@@ -117,11 +168,41 @@ const Explore = () => {
     });
     map.addLayer(clusterGroupRef.current);
 
+    // Fetch chargers on map move/zoom with debounce
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    const onMoveEnd = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const bounds = map.getBounds();
+        fetchOSMChargers({
+          south: bounds.getSouth(),
+          west: bounds.getWest(),
+          north: bounds.getNorth(),
+          east: bounds.getEast(),
+        });
+      }, 500);
+    };
+    map.on("moveend", onMoveEnd);
+
+    // Initial fetch
+    setTimeout(() => {
+      const bounds = map.getBounds();
+      fetchOSMChargers({
+        south: bounds.getSouth(),
+        west: bounds.getWest(),
+        north: bounds.getNorth(),
+        east: bounds.getEast(),
+      });
+    }, 300);
+
     return () => {
+      clearTimeout(debounceTimer);
+      map.off("moveend", onMoveEnd);
       map.remove();
       mapRef.current = null;
       clusterGroupRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update user marker when location changes
@@ -144,7 +225,7 @@ const Explore = () => {
 
     clusterGroupRef.current.clearLayers();
 
-    chargers.forEach((c) => {
+    allChargers.forEach((c) => {
       const icon = c.source === "osm" ? osmIcon : voltshareIcon;
       const marker = L.marker([c.latitude, c.longitude], { icon });
       const sourceTag = c.source === "osm"
@@ -172,12 +253,7 @@ const Explore = () => {
       marker.on("click", () => setSelected(c));
       clusterGroupRef.current!.addLayer(marker);
     });
-
-    if (chargers.length > 0 && userLat == null) {
-      const bounds = L.latLngBounds(chargers.map((c) => [c.latitude, c.longitude] as [number, number]));
-      mapRef.current.fitBounds(bounds.pad(0.15));
-    }
-  }, [chargers, userLat]);
+  }, [allChargers]);
 
   const handleLocateMe = () => {
     if ("geolocation" in navigator) {
@@ -188,9 +264,7 @@ const Explore = () => {
           setUserLng(pos.coords.longitude);
           setLocating(false);
         },
-        () => {
-          setLocating(false);
-        },
+        () => setLocating(false),
         { timeout: 8000 }
       );
     }
@@ -222,14 +296,20 @@ const Explore = () => {
         <Button variant="outline" size="icon" onClick={handleLocateMe} disabled={locating}>
           {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
         </Button>
+        {osmLoading && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>Loading stations...</span>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         <div className="w-96 border-r border-border overflow-y-auto p-4 space-y-3 hidden lg:block">
           <p className="text-sm text-muted-foreground mb-2">
-            {isLoading ? "Loading chargers..." : `${chargers.length} chargers found`}
+            {isLoading ? "Loading chargers..." : `${allChargers.length} chargers found`}
           </p>
-          {chargers.map((c) => (
+          {allChargers.map((c) => (
             <ChargerCard key={c.id} charger={c} compact onSelect={setSelected} />
           ))}
         </div>
@@ -238,7 +318,7 @@ const Explore = () => {
           <div ref={mapContainerRef} className="h-full w-full" />
 
           <div className="lg:hidden absolute bottom-0 left-0 right-0 glass rounded-t-2xl max-h-[40vh] overflow-y-auto p-4 space-y-3">
-            {chargers.map((c) => (
+            {allChargers.map((c) => (
               <ChargerCard key={c.id} charger={c} compact onSelect={setSelected} />
             ))}
           </div>
