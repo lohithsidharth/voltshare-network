@@ -13,6 +13,7 @@ import DriverDashboard from "./pages/DriverDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ChargerDetail from "./pages/ChargerDetail";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<><Index /><Footer /></>} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/charger/:id" element={<><ChargerDetail /><Footer /></>} />
             <Route path="/trip-planner" element={<TripPlanner />} />
             <Route path="/driver" element={<><DriverDashboard /><Footer /></>} />
             <Route path="/host" element={<><HostDashboard /><Footer /></>} />

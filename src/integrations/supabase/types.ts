@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          booking_id: string
+          code: string
+          created_at: string
+          id: string
+          used: boolean | null
+          valid_until: string
+        }
+        Insert: {
+          booking_id: string
+          code: string
+          created_at?: string
+          id?: string
+          used?: boolean | null
+          valid_until: string
+        }
+        Update: {
+          booking_id?: string
+          code?: string
+          created_at?: string
+          id?: string
+          used?: boolean | null
+          valid_until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_codes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booking_date: string
@@ -71,6 +106,7 @@ export type Database = {
         Row: {
           address: string
           availability: string | null
+          charger_type: string | null
           created_at: string
           host_id: string
           id: string
@@ -79,6 +115,9 @@ export type Database = {
           latitude: number
           location: unknown
           longitude: number
+          off_peak_price_per_kwh: number | null
+          parking_available: boolean | null
+          peak_price_per_kwh: number | null
           power: number
           price_per_kwh: number
           rating: number | null
@@ -89,6 +128,7 @@ export type Database = {
         Insert: {
           address: string
           availability?: string | null
+          charger_type?: string | null
           created_at?: string
           host_id: string
           id?: string
@@ -97,6 +137,9 @@ export type Database = {
           latitude: number
           location?: unknown
           longitude: number
+          off_peak_price_per_kwh?: number | null
+          parking_available?: boolean | null
+          peak_price_per_kwh?: number | null
           power: number
           price_per_kwh: number
           rating?: number | null
@@ -107,6 +150,7 @@ export type Database = {
         Update: {
           address?: string
           availability?: string | null
+          charger_type?: string | null
           created_at?: string
           host_id?: string
           id?: string
@@ -115,6 +159,9 @@ export type Database = {
           latitude?: number
           location?: unknown
           longitude?: number
+          off_peak_price_per_kwh?: number | null
+          parking_available?: boolean | null
+          peak_price_per_kwh?: number | null
           power?: number
           price_per_kwh?: number
           rating?: number | null

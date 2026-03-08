@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -7,8 +7,9 @@ import "leaflet.markercluster";
 import { useOverpassChargers, OverpassCharger } from "@/hooks/useOverpassChargers";
 import { useChargers, Charger } from "@/hooks/useChargers";
 import ChargerCard from "@/components/ChargerCard";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal, LocateFixed, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal, LocateFixed, Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -77,6 +78,7 @@ const userIcon = new L.DivIcon({
 });
 
 const Explore = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [powerFilter, setPowerFilter] = useState("all");
   const [selected, setSelected] = useState<Charger | null>(null);
@@ -133,6 +135,31 @@ const Explore = () => {
     }));
 
   const allChargers = [...voltshareChargers, ...osmAsChargers];
+
+  // Smart matching: score chargers by distance, price, availability, speed
+  const recommendedCharger = useMemo(() => {
+    const available = allChargers.filter(c => c.source === "voltshare" && c.is_active);
+    if (available.length === 0 || (userLat == null && userLng == null)) return null;
+
+    const scored = available.map(c => {
+      let score = 0;
+      // Distance score (closer = better, max 40 pts)
+      if (userLat != null && userLng != null) {
+        const dist = Math.sqrt(Math.pow(c.latitude - userLat, 2) + Math.pow(c.longitude - userLng, 2)) * 111000;
+        score += Math.max(0, 40 - (dist / 250)); // 40 pts at 0m, 0 at 10km
+      }
+      // Price score (cheaper = better, max 20 pts)
+      if (c.price_per_kwh > 0) score += Math.max(0, 20 - c.price_per_kwh);
+      // Speed score (faster = better, max 20 pts)
+      score += Math.min(20, c.power * 1.5);
+      // Rating score (max 20 pts)
+      if (c.rating) score += c.rating * 4;
+      return { charger: c, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored[0]?.charger || null;
+  }, [allChargers, userLat, userLng]);
 
   // Fetch OSM chargers based on current map bounds
   const fetchForBounds = useCallback(() => {
@@ -334,6 +361,17 @@ const Explore = () => {
 
       <div className="flex-1 flex overflow-hidden">
         <div className="w-96 border-r border-border overflow-y-auto p-4 space-y-3 hidden lg:block">
+          {recommendedCharger && (
+            <div className="mb-4">
+              <p className="text-xs font-semibold text-secondary mb-2 flex items-center gap-1">
+                <Zap className="w-3 h-3" /> Smart Match — Best charger for you
+              </p>
+              <ChargerCard charger={recommendedCharger} compact recommended onSelect={(c) => {
+                if (c.source === "voltshare") navigate(`/charger/${c.id}`);
+                else setSelected(c);
+              }} />
+            </div>
+          )}
           <p className="text-sm text-muted-foreground mb-2">
             {isLoading ? "Loading chargers..." : `${allChargers.length} chargers found`}
           </p>
