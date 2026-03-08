@@ -302,8 +302,8 @@ const ChargerDetailPage = () => {
                       <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{startSlot} – {endSlot} · {charger.power} kW</p>
                     </div>
                     <Button className="rounded-sm font-mono text-[11px] tracking-wider" onClick={handleBook} disabled={booking}>
-                      {booking ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <CreditCard className="w-3.5 h-3.5 mr-1" />}
-                      PAY & BOOK
+                      {booking ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Lock className="w-3.5 h-3.5 mr-1" />}
+                      CONFIRM BOOKING
                     </Button>
                   </div>
                 )}
