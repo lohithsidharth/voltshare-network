@@ -480,7 +480,7 @@ const Explore = () => {
             <MarkerClustererF options={clusterOptions}>
               {(clusterer) => (
                 <>
-                  {allChargers.map((c) => (
+                  {allChargers.filter((c) => c.latitude != null && c.longitude != null).map((c) => (
                     <MarkerF
                       key={c.id}
                       position={{ lat: c.latitude, lng: c.longitude }}
