@@ -497,7 +497,7 @@ const Explore = () => {
                       }}
                     />
                   ))}
-                  {filteredOCM.map((c) => (
+                  {filteredOCM.filter((c) => c.latitude != null && c.longitude != null).map((c) => (
                     <MarkerF
                       key={`ocm-${c.ocm_id}`}
                       position={{ lat: c.latitude, lng: c.longitude }}
