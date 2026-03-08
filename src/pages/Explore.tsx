@@ -357,16 +357,13 @@ const Explore = () => {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <div className="w-[380px] border-r border-border/50 overflow-y-auto p-4 space-y-3 hidden lg:block bg-background/50">
-          {/* Nearby alert */}
+        <div className="w-[360px] border-r border-border overflow-y-auto p-4 space-y-2 hidden lg:block">
           {nearbyCount > 0 && (
-            <div className="glass-card rounded-2xl p-4 flex items-center gap-3 border-glow mb-4 animate-fade-in">
-              <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-                <Bell className="w-5 h-5 text-secondary" />
-              </div>
+            <div className="rounded-md border border-border p-3 flex items-center gap-3 mb-3">
+              <Bell className="w-4 h-4 text-secondary shrink-0" />
               <div>
-                <p className="text-sm font-semibold">{nearbyCount} chargers within 1 km</p>
-                <p className="text-xs text-muted-foreground">Community charging available nearby</p>
+                <p className="text-sm font-medium">{nearbyCount} chargers within 1 km</p>
+                <p className="text-xs text-muted-foreground">Community charging nearby</p>
               </div>
             </div>
           )}
