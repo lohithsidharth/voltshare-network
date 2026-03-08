@@ -1,64 +1,80 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, MapPin, Clock, Battery, ArrowRight, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, ArrowRight, Zap, MapPin, Battery, Users } from "lucide-react";
+import { useState } from "react";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate(`/explore${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+  };
+
   return (
-    <div className="min-h-screen">
-      {/* Hero */}
-      <section className="min-h-[90vh] flex items-center justify-center pt-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="text-sm text-muted-foreground mb-4 tracking-wide uppercase">Peer-to-peer EV charging</p>
+    <div className="min-h-screen pt-12">
+      {/* Hero — search centered */}
+      <section className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+        <div className="w-full max-w-2xl">
+          <p className="font-mono text-[11px] tracking-[0.2em] text-primary mb-6 uppercase">
+            Peer-to-peer charging network
+          </p>
 
-            <h1 className="font-heading text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-[1.1]">
-              Find and share EV chargers near you.
-            </h1>
+          <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-4">
+            Where do you want<br />to charge?
+          </h1>
 
-            <p className="text-muted-foreground text-lg max-w-lg mx-auto mb-10">
-              VoltShare connects drivers with homeowners who share their chargers. Book in seconds.
-            </p>
+          <p className="text-muted-foreground text-sm max-w-md mb-10">
+            2,400+ community chargers across India. Search a location, find a charger, book instantly.
+          </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" className="h-12 px-6 rounded-lg font-medium">
-                <Link to="/explore">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Find a Charger
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 px-6 rounded-lg font-medium">
-                <Link to="/host">
-                  List Your Charger
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
+          <form onSubmit={handleSearch} className="flex gap-2 mb-16">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search city, area, or charger name..."
+                className="pl-10 h-11 bg-card border-border rounded-sm font-mono text-sm"
+              />
             </div>
+            <Button type="submit" className="h-11 px-5 rounded-sm font-mono text-[11px] tracking-wider">
+              SEARCH
+            </Button>
+          </form>
 
-            <div className="flex items-center justify-center gap-8 mt-16 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-primary" /> 2,400+ chargers</span>
-              <span className="hidden sm:flex items-center gap-2"><Battery className="w-4 h-4 text-primary" /> 18K+ drivers</span>
-              <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> 50+ cities</span>
-            </div>
+          {/* Grid stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border">
+            {[
+              { value: "2,400+", label: "CHARGERS", icon: Zap },
+              { value: "18K+", label: "DRIVERS", icon: Users },
+              { value: "50+", label: "CITIES", icon: MapPin },
+              { value: "₹4K", label: "AVG HOST/MO", icon: Battery },
+            ].map((s) => (
+              <div key={s.label} className="bg-background p-5">
+                <s.icon className="w-4 h-4 text-primary mb-3" />
+                <p className="font-heading text-2xl font-bold">{s.value}</p>
+                <p className="font-mono text-[10px] tracking-wider text-muted-foreground mt-1">{s.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="py-24 border-t border-border">
+      <section className="border-t border-border">
         <div className="container mx-auto px-4">
-          <h2 className="font-heading text-2xl md:text-3xl font-bold text-center mb-16">How it works</h2>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-px bg-border">
             {[
-              { icon: MapPin, step: "1", title: "Discover", desc: "Browse chargers on the map. Filter by price, power, and availability." },
-              { icon: Clock, step: "2", title: "Book", desc: "Pick a time slot, see the cost, and confirm instantly." },
-              { icon: Battery, step: "3", title: "Charge", desc: "Get your access code, navigate there, and plug in." },
+              { step: "01", title: "DISCOVER", desc: "Browse the live map. Filter by power, price, availability. Find community chargers near you." },
+              { step: "02", title: "BOOK", desc: "Pick a time slot and confirm. See exact cost upfront. Get a secure access code." },
+              { step: "03", title: "CHARGE", desc: "Navigate to the charger. Plug in using your access code. Rate your experience." },
             ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center mx-auto mb-4 text-sm font-medium text-muted-foreground">
-                  {item.step}
-                </div>
-                <h3 className="font-heading text-lg font-semibold mb-2">{item.title}</h3>
+              <div key={item.step} className="bg-background p-8 md:p-10">
+                <span className="font-mono text-primary text-[11px] tracking-wider">{item.step}</span>
+                <h3 className="font-heading text-lg font-bold mt-3 mb-3">{item.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </div>
             ))}
@@ -67,37 +83,48 @@ const Index = () => {
       </section>
 
       {/* Host CTA */}
-      <section className="py-24 border-t border-border">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <p className="text-sm text-secondary font-medium mb-3 uppercase tracking-wide">For homeowners</p>
-            <h2 className="font-heading text-2xl md:text-3xl font-bold mb-4">Share your charger, earn money.</h2>
-            <p className="text-muted-foreground mb-8">
-              Hosts earn an average of ₹4,000/month. List your charger in minutes.
-            </p>
-            <Button asChild size="lg" className="h-12 px-6 rounded-lg font-medium">
-              <Link to="/host">
-                Become a Host <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </Button>
+      <section className="border-t border-border">
+        <div className="container mx-auto px-4 py-20">
+          <div className="grid md:grid-cols-2 gap-16 items-center max-w-4xl mx-auto">
+            <div>
+              <p className="font-mono text-[11px] tracking-[0.2em] text-primary mb-4">FOR HOMEOWNERS</p>
+              <h2 className="font-heading text-3xl font-bold mb-4">List your charger.<br />Earn passive income.</h2>
+              <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+                Hosts earn ₹4,000+ monthly on average. Set your own pricing, control availability, and get verified.
+              </p>
+              <Button asChild className="rounded-sm font-mono text-[11px] tracking-wider h-10 px-5">
+                <Link to="/host">BECOME A HOST <ArrowRight className="w-3.5 h-3.5 ml-2" /></Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-px bg-border">
+              {[
+                { value: "₹4K+", label: "AVG MONTHLY" },
+                { value: "100%", label: "VERIFIED" },
+                { value: "80%", label: "HOST SHARE" },
+                { value: "4.8★", label: "AVG RATING" },
+              ].map((s) => (
+                <div key={s.label} className="bg-card p-5">
+                  <p className="font-heading text-xl font-bold">{s.value}</p>
+                  <p className="font-mono text-[10px] tracking-wider text-muted-foreground mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Bottom CTA */}
-      <section className="py-24 border-t border-border">
-        <div className="container mx-auto px-4">
-          <div className="max-w-xl mx-auto text-center">
-            <h2 className="font-heading text-2xl md:text-3xl font-bold mb-4">Ready to get started?</h2>
-            <p className="text-muted-foreground mb-8">Find a community charger or list yours today.</p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <Button asChild size="lg" className="h-12 px-6 rounded-lg font-medium">
-                <Link to="/explore">Start Charging</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 px-6 rounded-lg font-medium">
-                <Link to="/host">List Your Charger</Link>
-              </Button>
-            </div>
+      <section className="border-t border-border py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="font-heading text-2xl font-bold mb-3">Ready to start?</h2>
+          <p className="text-muted-foreground text-sm mb-8">Find a charger or list yours.</p>
+          <div className="flex justify-center gap-3">
+            <Button asChild className="rounded-sm font-mono text-[11px] tracking-wider h-10 px-5">
+              <Link to="/explore">FIND CHARGER</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-sm font-mono text-[11px] tracking-wider h-10 px-5">
+              <Link to="/host">LIST CHARGER</Link>
+            </Button>
           </div>
         </div>
       </section>
