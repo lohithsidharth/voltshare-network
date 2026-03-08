@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import {
-  Plus, Loader2, Car, Star, CheckCircle, XCircle,
+  Plus, Loader2, Star, CheckCircle, XCircle, Zap, BatteryCharging, TrendingUp, BarChart3,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -66,14 +66,14 @@ const HostDashboard = () => {
     setTogglingId(charger.id);
     const newStatus = !charger.is_active;
     const { error } = await supabase.from("chargers").update({ is_active: newStatus }).eq("id", charger.id);
-    if (error) { toast.error("Failed"); } else { setChargers(prev => prev.map(c => c.id === charger.id ? { ...c, is_active: newStatus } : c)); toast.success(newStatus ? "Online" : "Offline"); }
+    if (error) { toast.error("Failed"); } else { setChargers(prev => prev.map(c => c.id === charger.id ? { ...c, is_active: newStatus } : c)); toast.success(newStatus ? "Charger is now online" : "Charger is now offline"); }
     setTogglingId(null);
   };
 
   const updateBookingStatus = async (bookingId: string, status: "confirmed" | "cancelled") => {
     setUpdatingStatusId(bookingId);
     const { error } = await supabase.from("bookings").update({ status }).eq("id", bookingId);
-    if (error) { toast.error("Failed"); } else { setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b)); toast.success(status === "confirmed" ? "Confirmed" : "Cancelled"); }
+    if (error) { toast.error("Failed"); } else { setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status } : b)); toast.success(status === "confirmed" ? "Booking confirmed" : "Booking cancelled"); }
     setUpdatingStatusId(null);
   };
 
@@ -119,33 +119,34 @@ const HostDashboard = () => {
   }, [bookings]);
 
   return (
-    <div className="pt-12 min-h-screen">
+    <div className="pt-16 min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="font-mono text-[10px] tracking-wider text-primary mb-1">HOST DASHBOARD</p>
-            <h1 className="font-heading text-2xl font-bold">Manage chargers & earnings</h1>
+            <h1 className="font-heading text-2xl font-bold">Host Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage your chargers and track earnings</p>
           </div>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="rounded-sm font-mono text-[10px] tracking-wider"><Plus className="w-3 h-3 mr-1" />ADD CHARGER</Button>
+              <Button className="rounded-xl font-medium"><Plus className="w-4 h-4 mr-2" />Add Charger</Button>
             </DialogTrigger>
-            <DialogContent className="border-border bg-card rounded-sm max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle className="font-heading text-lg">Register Charger</DialogTitle></DialogHeader>
-              <div className="space-y-3 pt-2">
-                <div><Label className="font-mono text-[10px] tracking-wider">TITLE</Label><Input placeholder="e.g. Home Charger – HSR" className="mt-1 rounded-sm bg-background" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></div>
-                <div><Label className="font-mono text-[10px] tracking-wider">ADDRESS</Label><Input className="mt-1 rounded-sm bg-background" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} /></div>
+            <DialogContent className="border-border bg-card rounded-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle className="font-heading text-xl font-bold">Register a New Charger</DialogTitle></DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div><Label className="text-sm font-medium">Charger Name</Label><Input placeholder="e.g. Home Charger – HSR Layout" className="mt-1.5 rounded-xl bg-background h-11" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></div>
+                <div><Label className="text-sm font-medium">Address</Label><Input className="mt-1.5 rounded-xl bg-background h-11" placeholder="Full address" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label className="font-mono text-[10px] tracking-wider">LAT</Label><Input type="number" step="any" className="mt-1 rounded-sm bg-background" value={form.latitude} onChange={e => setForm(p => ({ ...p, latitude: e.target.value }))} /></div>
-                  <div><Label className="font-mono text-[10px] tracking-wider">LNG</Label><Input type="number" step="any" className="mt-1 rounded-sm bg-background" value={form.longitude} onChange={e => setForm(p => ({ ...p, longitude: e.target.value }))} /></div>
+                  <div><Label className="text-sm font-medium">Latitude</Label><Input type="number" step="any" className="mt-1.5 rounded-xl bg-background h-11" value={form.latitude} onChange={e => setForm(p => ({ ...p, latitude: e.target.value }))} /></div>
+                  <div><Label className="text-sm font-medium">Longitude</Label><Input type="number" step="any" className="mt-1.5 rounded-xl bg-background h-11" value={form.longitude} onChange={e => setForm(p => ({ ...p, longitude: e.target.value }))} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label className="font-mono text-[10px] tracking-wider">POWER (KW)</Label><Input type="number" className="mt-1 rounded-sm bg-background" value={form.power} onChange={e => setForm(p => ({ ...p, power: e.target.value }))} /></div>
+                  <div><Label className="text-sm font-medium">Power (kW)</Label><Input type="number" className="mt-1.5 rounded-xl bg-background h-11" value={form.power} onChange={e => setForm(p => ({ ...p, power: e.target.value }))} /></div>
                   <div>
-                    <Label className="font-mono text-[10px] tracking-wider">TYPE</Label>
+                    <Label className="text-sm font-medium">Connector Type</Label>
                     <Select value={form.chargerType} onValueChange={v => setForm(p => ({ ...p, chargerType: v }))}>
-                      <SelectTrigger className="mt-1 rounded-sm bg-background"><SelectValue /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="mt-1.5 rounded-xl bg-background h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent className="rounded-xl">
                         <SelectItem value="Type 1">Type 1</SelectItem><SelectItem value="Type 2">Type 2</SelectItem>
                         <SelectItem value="CCS">CCS</SelectItem><SelectItem value="CHAdeMO">CHAdeMO</SelectItem>
                         <SelectItem value="Wall Socket">Wall Socket</SelectItem>
@@ -153,18 +154,21 @@ const HostDashboard = () => {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div><Label className="font-mono text-[10px] tracking-wider">₹/KWH</Label><Input type="number" className="mt-1 rounded-sm bg-background" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))} /></div>
-                  <div><Label className="font-mono text-[10px] tracking-wider">PEAK ₹</Label><Input type="number" className="mt-1 rounded-sm bg-background" value={form.peakPrice} onChange={e => setForm(p => ({ ...p, peakPrice: e.target.value }))} /></div>
-                  <div><Label className="font-mono text-[10px] tracking-wider">OFF-PEAK ₹</Label><Input type="number" className="mt-1 rounded-sm bg-background" value={form.offPeakPrice} onChange={e => setForm(p => ({ ...p, offPeakPrice: e.target.value }))} /></div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div><Label className="text-sm font-medium">₹/kWh</Label><Input type="number" className="mt-1.5 rounded-xl bg-background h-11" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))} /></div>
+                  <div><Label className="text-sm font-medium">Peak ₹</Label><Input type="number" className="mt-1.5 rounded-xl bg-background h-11" value={form.peakPrice} onChange={e => setForm(p => ({ ...p, peakPrice: e.target.value }))} /></div>
+                  <div><Label className="text-sm font-medium">Off-peak ₹</Label><Input type="number" className="mt-1.5 rounded-xl bg-background h-11" value={form.offPeakPrice} onChange={e => setForm(p => ({ ...p, offPeakPrice: e.target.value }))} /></div>
                 </div>
-                <div><Label className="font-mono text-[10px] tracking-wider">AVAILABILITY</Label><Input className="mt-1 rounded-sm bg-background" value={form.availability} onChange={e => setForm(p => ({ ...p, availability: e.target.value }))} /></div>
-                <div className="flex items-center gap-3">
+                <div><Label className="text-sm font-medium">Available Hours</Label><Input className="mt-1.5 rounded-xl bg-background h-11" value={form.availability} onChange={e => setForm(p => ({ ...p, availability: e.target.value }))} /></div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
                   <Switch checked={form.parkingAvailable} onCheckedChange={v => setForm(p => ({ ...p, parkingAvailable: v }))} />
-                  <Label className="font-mono text-[10px] tracking-wider">PARKING</Label>
+                  <div>
+                    <p className="text-sm font-medium">Parking Available</p>
+                    <p className="text-xs text-muted-foreground">Dedicated parking spot for charging</p>
+                  </div>
                 </div>
-                <Button className="w-full rounded-sm font-mono text-[10px] tracking-wider" onClick={handleAddCharger} disabled={adding}>
-                  {adding ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Plus className="w-3 h-3 mr-1" />}REGISTER
+                <Button className="w-full rounded-xl font-medium h-11" onClick={handleAddCharger} disabled={adding}>
+                  {adding ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}Register Charger
                 </Button>
               </div>
             </DialogContent>
@@ -172,32 +176,35 @@ const HostDashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-border mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
           {[
-            { label: "CHARGERS", value: String(chargers.filter(c => c.is_active).length) },
-            { label: "BOOKINGS", value: String(bookings.length) },
-            { label: "ENERGY", value: `${totalEnergy}kWh` },
-            { label: "REVENUE", value: `₹${totalRevenue.toLocaleString()}` },
-            { label: "EARNINGS", value: `₹${hostEarnings.toLocaleString()}` },
+            { label: "Active Chargers", value: String(chargers.filter(c => c.is_active).length), icon: Zap },
+            { label: "Total Bookings", value: String(bookings.length), icon: BarChart3 },
+            { label: "Energy Delivered", value: `${totalEnergy} kWh`, icon: BatteryCharging },
+            { label: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: TrendingUp },
+            { label: "Your Earnings", value: `₹${hostEarnings.toLocaleString()}`, icon: TrendingUp },
           ].map((s) => (
-            <div key={s.label} className="bg-background p-4">
-              <p className="font-mono text-[9px] tracking-wider text-muted-foreground">{s.label}</p>
-              <p className="font-heading text-xl font-bold mt-1">{s.value}</p>
+            <div key={s.label} className="p-4 rounded-xl bg-card/50 border border-border/50">
+              <div className="flex items-center gap-2 mb-2">
+                <s.icon className="w-4 h-4 text-primary" />
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+              </div>
+              <p className="font-heading text-xl font-bold">{s.value}</p>
             </div>
           ))}
         </div>
 
         {/* Chart */}
-        <div className="border border-border p-4 mb-6">
-          <p className="font-mono text-[10px] tracking-wider text-muted-foreground mb-3">EARNINGS — LAST 7 DAYS</p>
-          <div className="h-40">
+        <div className="rounded-xl border border-border/50 bg-card/50 p-5 mb-8">
+          <p className="text-sm font-medium mb-4">Earnings — Last 7 Days</p>
+          <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,14%)" />
-                <XAxis dataKey="day" tick={{ fill: "hsl(0,0%,45%)", fontSize: 10, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "hsl(0,0%,45%)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "hsl(0,0%,7%)", border: "1px solid hsl(0,0%,14%)", borderRadius: 0, color: "hsl(0,0%,93%)", fontFamily: "JetBrains Mono", fontSize: 11 }} formatter={(value: number) => [`₹${value}`, "Earnings"]} />
-                <Bar dataKey="revenue" fill="hsl(145,100%,42%)" radius={0} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(210,12%,16%)" />
+                <XAxis dataKey="day" tick={{ fill: "hsl(210,10%,50%)", fontSize: 12, fontFamily: "DM Sans" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "hsl(210,10%,50%)", fontSize: 12 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ background: "hsl(210,18%,9%)", border: "1px solid hsl(210,12%,16%)", borderRadius: 12, color: "hsl(210,20%,95%)", fontFamily: "DM Sans", fontSize: 13 }} formatter={(value: number) => [`₹${value}`, "Earnings"]} />
+                <Bar dataKey="revenue" fill="hsl(155,80%,45%)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -206,26 +213,39 @@ const HostDashboard = () => {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Chargers */}
           <div>
-            <h2 className="font-mono text-[11px] tracking-wider text-muted-foreground mb-3">YOUR CHARGERS</h2>
+            <h2 className="text-sm font-medium text-muted-foreground mb-3">Your Chargers</h2>
             {loading ? (
               <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
             ) : chargers.length === 0 ? (
-              <div className="border border-border p-8 text-center"><p className="font-mono text-[11px] text-muted-foreground">NO CHARGERS YET</p></div>
+              <div className="rounded-xl border border-border/50 bg-card/50 p-10 text-center">
+                <BatteryCharging className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">No chargers registered yet</p>
+                <Button size="sm" className="mt-3 rounded-xl" onClick={() => setAddOpen(true)}>Add Your First Charger</Button>
+              </div>
             ) : (
-              <div className="divide-y divide-border border border-border">
+              <div className="space-y-3">
                 {chargers.map((c) => (
-                  <div key={c.id} className="p-4">
+                  <div key={c.id} className="rounded-xl border border-border/50 bg-card/50 p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-heading font-semibold text-sm">{c.title}</p>
-                        <div className="flex gap-3 font-mono text-[10px] tracking-wider text-muted-foreground mt-1">
-                          <span>{c.power}KW</span><span>₹{c.price_per_kwh}/KWH</span><span>{c.charger_type}</span>
-                          {c.rating != null && c.rating > 0 && <span className="flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-primary text-primary" />{c.rating}</span>}
+                        <p className="font-heading font-bold text-sm">{c.title}</p>
+                        <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+                          <span>{c.power} kW</span>
+                          <span>₹{c.price_per_kwh}/kWh</span>
+                          <span>{c.charger_type}</span>
+                          {c.rating != null && c.rating > 0 && (
+                            <span className="flex items-center gap-0.5">
+                              <Star className="w-3 h-3 fill-primary text-primary" />{c.rating}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={cn("font-mono text-[10px] tracking-wider font-semibold", c.is_active ? "text-primary" : "text-destructive")}>
-                          {c.is_active ? "ONLINE" : "OFFLINE"}
+                        <span className={cn(
+                          "text-xs font-semibold px-2 py-1 rounded-lg",
+                          c.is_active ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+                        )}>
+                          {c.is_active ? "Online" : "Offline"}
                         </span>
                         <Switch checked={!!c.is_active} disabled={togglingId === c.id} onCheckedChange={() => toggleAvailability(c)} />
                       </div>
@@ -238,34 +258,40 @@ const HostDashboard = () => {
 
           {/* Bookings */}
           <div>
-            <h2 className="font-mono text-[11px] tracking-wider text-muted-foreground mb-3">RECENT BOOKINGS</h2>
+            <h2 className="text-sm font-medium text-muted-foreground mb-3">Recent Bookings</h2>
             {loading ? (
               <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
             ) : bookings.length === 0 ? (
-              <div className="border border-border p-8 text-center"><p className="font-mono text-[11px] text-muted-foreground">NO BOOKINGS</p></div>
+              <div className="rounded-xl border border-border/50 bg-card/50 p-10 text-center">
+                <BarChart3 className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">No bookings yet</p>
+              </div>
             ) : (
-              <div className="divide-y divide-border border border-border">
+              <div className="space-y-3">
                 {bookings.map((b) => (
-                  <div key={b.id} className="p-4">
+                  <div key={b.id} className="rounded-xl border border-border/50 bg-card/50 p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium">{b.driver_profile?.display_name || "Driver"}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{b.charger_title} · {b.booking_date} · {b.start_time?.substring(0,5)}–{b.end_time?.substring(0,5)}</p>
+                        <p className="text-sm font-semibold">{b.driver_profile?.display_name || "Driver"}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{b.charger_title} · {b.booking_date} · {b.start_time?.substring(0,5)}–{b.end_time?.substring(0,5)}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-heading font-bold text-sm">₹{b.final_price || b.estimated_price}</span>
-                        <span className={cn("font-mono text-[9px] tracking-wider font-semibold",
-                          b.status === "confirmed" ? "text-primary" : b.status === "completed" ? "text-primary" : "text-destructive"
-                        )}>{b.status.toUpperCase()}</span>
+                        <span className={cn(
+                          "text-xs font-semibold px-2 py-1 rounded-lg",
+                          b.status === "confirmed" ? "bg-primary/10 text-primary" :
+                          b.status === "completed" ? "bg-primary/10 text-primary" :
+                          "bg-destructive/10 text-destructive"
+                        )}>{b.status}</span>
                       </div>
                     </div>
                     {b.status === "pending" && (
-                      <div className="flex gap-2 mt-2 pt-2 border-t border-border">
-                        <Button size="sm" className="rounded-sm font-mono text-[10px] h-7" disabled={updatingStatusId === b.id} onClick={() => updateBookingStatus(b.id, "confirmed")}>
-                          <CheckCircle className="w-3 h-3 mr-1" />ACCEPT
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
+                        <Button size="sm" className="rounded-xl font-medium" disabled={updatingStatusId === b.id} onClick={() => updateBookingStatus(b.id, "confirmed")}>
+                          <CheckCircle className="w-3.5 h-3.5 mr-1.5" />Accept
                         </Button>
-                        <Button size="sm" variant="outline" className="rounded-sm font-mono text-[10px] h-7 text-destructive" disabled={updatingStatusId === b.id} onClick={() => updateBookingStatus(b.id, "cancelled")}>
-                          <XCircle className="w-3 h-3 mr-1" />REJECT
+                        <Button size="sm" variant="outline" className="rounded-xl font-medium text-destructive" disabled={updatingStatusId === b.id} onClick={() => updateBookingStatus(b.id, "cancelled")}>
+                          <XCircle className="w-3.5 h-3.5 mr-1.5" />Reject
                         </Button>
                       </div>
                     )}

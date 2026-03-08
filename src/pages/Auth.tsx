@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, Home, Phone, Mail, ArrowLeft } from "lucide-react";
+import { Car, Home, Phone, Mail, ArrowLeft, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import voltIcon from "@/assets/volt-icon.png";
 
 const Auth = () => {
   const { signIn, signUp } = useAuth();
@@ -84,17 +85,19 @@ const Auth = () => {
 
   const roleSelector = (
     <div>
-      <Label className="mb-2 block font-mono text-[11px] tracking-wider">ROLE</Label>
-      <div className="grid grid-cols-2 gap-px bg-border">
+      <Label className="mb-2 block text-sm font-medium">I want to</Label>
+      <div className="grid grid-cols-2 gap-3">
         <button type="button" onClick={() => setRole("driver")}
-          className={`p-4 text-center ${role === "driver" ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground"}`}>
-          <Car className="w-5 h-5 mx-auto mb-1.5" />
-          <p className="font-mono text-[10px] tracking-wider">DRIVER</p>
+          className={`p-4 rounded-xl border text-center transition-all ${role === "driver" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground hover:border-muted-foreground/30"}`}>
+          <Car className="w-6 h-6 mx-auto mb-2" />
+          <p className="text-sm font-semibold">Find Chargers</p>
+          <p className="text-xs text-muted-foreground mt-0.5">I'm an EV driver</p>
         </button>
         <button type="button" onClick={() => setRole("host")}
-          className={`p-4 text-center ${role === "host" ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground"}`}>
-          <Home className="w-5 h-5 mx-auto mb-1.5" />
-          <p className="font-mono text-[10px] tracking-wider">HOST</p>
+          className={`p-4 rounded-xl border text-center transition-all ${role === "host" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground hover:border-muted-foreground/30"}`}>
+          <Home className="w-6 h-6 mx-auto mb-2" />
+          <p className="text-sm font-semibold">Host a Charger</p>
+          <p className="text-xs text-muted-foreground mt-0.5">I own a charger</p>
         </button>
       </div>
     </div>
@@ -105,24 +108,27 @@ const Auth = () => {
       {!otpSent ? (
         <>
           {tab === "signup" && (
-            <div><Label className="font-mono text-[11px] tracking-wider">NAME</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1 rounded-sm bg-card" placeholder="Your name" /></div>
+            <div>
+              <Label className="text-sm font-medium">Your Name</Label>
+              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1.5 rounded-xl bg-background h-11" placeholder="Enter your name" />
+            </div>
           )}
           <div>
-            <Label className="font-mono text-[11px] tracking-wider">PHONE</Label>
-            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 rounded-sm bg-card" placeholder="+919876543210" />
+            <Label className="text-sm font-medium">Phone Number</Label>
+            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1.5 rounded-xl bg-background h-11" placeholder="+91 98765 43210" />
           </div>
           {tab === "signup" && roleSelector}
-          <Button className="w-full rounded-sm font-mono text-[11px] tracking-wider" onClick={handleSendOTP} disabled={loading}>
-            {loading ? "SENDING..." : "SEND OTP"}
+          <Button className="w-full rounded-xl font-medium h-11" onClick={handleSendOTP} disabled={loading}>
+            {loading ? "Sending..." : "Send OTP"}
           </Button>
         </>
       ) : (
         <>
-          <button onClick={resetPhone} className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-3 h-3" /> CHANGE NUMBER
+          <button onClick={resetPhone} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" /> Change number
           </button>
-          <p className="text-sm text-muted-foreground">Code sent to <span className="text-foreground font-mono">{phone}</span></p>
-          <div className="flex justify-center">
+          <p className="text-sm text-muted-foreground">Enter the 6-digit code sent to <span className="text-foreground font-medium">{phone}</span></p>
+          <div className="flex justify-center py-2">
             <InputOTP maxLength={6} value={otp} onChange={setOtp}>
               <InputOTPGroup>
                 <InputOTPSlot index={0} /><InputOTPSlot index={1} /><InputOTPSlot index={2} />
@@ -130,47 +136,54 @@ const Auth = () => {
               </InputOTPGroup>
             </InputOTP>
           </div>
-          <Button className="w-full rounded-sm font-mono text-[11px] tracking-wider" onClick={handleVerifyOTP} disabled={loading || otp.length !== 6}>
-            {loading ? "VERIFYING..." : "VERIFY"}
+          <Button className="w-full rounded-xl font-medium h-11" onClick={handleVerifyOTP} disabled={loading || otp.length !== 6}>
+            {loading ? "Verifying..." : "Verify & Continue"}
           </Button>
-          <Button variant="ghost" size="sm" className="w-full font-mono text-[10px]" onClick={handleSendOTP} disabled={loading}>RESEND</Button>
+          <Button variant="ghost" size="sm" className="w-full text-sm" onClick={handleSendOTP} disabled={loading}>Resend Code</Button>
         </>
       )}
     </div>
   );
 
   return (
-    <div className="min-h-screen pt-12 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm border border-border bg-card">
-        <div className="border-b border-border p-6 text-center">
-          <p className="font-mono text-[11px] tracking-[0.2em] text-primary mb-2">VOLTSHARE</p>
-          <h1 className="font-heading text-xl font-bold">Welcome</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in or create an account</p>
+    <div className="min-h-screen pt-16 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <img src={voltIcon} alt="VoltShare" className="w-12 h-12 mx-auto mb-4" />
+          <h1 className="font-heading text-2xl font-bold">Welcome to VoltShare</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sign in or create an account to continue</p>
         </div>
-        <div className="p-6">
+
+        <div className="rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm p-6">
           <Tabs value={tab} onValueChange={(v) => { setTab(v as "login" | "signup"); resetPhone(); }}>
-            <TabsList className="grid w-full grid-cols-2 mb-4 rounded-sm">
-              <TabsTrigger value="login" className="rounded-sm font-mono text-[11px] tracking-wider">LOGIN</TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-sm font-mono text-[11px] tracking-wider">SIGN UP</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-5 rounded-xl h-11">
+              <TabsTrigger value="login" className="rounded-xl text-sm font-medium">Log In</TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-xl text-sm font-medium">Sign Up</TabsTrigger>
             </TabsList>
 
-            <div className="grid grid-cols-2 gap-px bg-border mb-5">
+            <div className="grid grid-cols-2 gap-2 mb-5">
               <button onClick={() => { setMethod("email"); resetPhone(); }}
-                className={`flex items-center justify-center gap-1.5 py-2 text-[10px] font-mono tracking-wider ${method === "email" ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground"}`}>
-                <Mail className="w-3 h-3" /> EMAIL
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${method === "email" ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted/50 text-muted-foreground border border-transparent"}`}>
+                <Mail className="w-4 h-4" /> Email
               </button>
               <button onClick={() => setMethod("phone")}
-                className={`flex items-center justify-center gap-1.5 py-2 text-[10px] font-mono tracking-wider ${method === "phone" ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground"}`}>
-                <Phone className="w-3 h-3" /> PHONE
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${method === "phone" ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted/50 text-muted-foreground border border-transparent"}`}>
+                <Phone className="w-4 h-4" /> Phone
               </button>
             </div>
 
             <TabsContent value="login">
               {method === "email" ? (
                 <form onSubmit={handleLogin} className="space-y-4">
-                  <div><Label className="font-mono text-[11px] tracking-wider">EMAIL</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1 rounded-sm bg-background" /></div>
-                  <div><Label className="font-mono text-[11px] tracking-wider">PASSWORD</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1 rounded-sm bg-background" /></div>
-                  <Button type="submit" className="w-full rounded-sm font-mono text-[11px] tracking-wider" disabled={loading}>{loading ? "..." : "SIGN IN"}</Button>
+                  <div>
+                    <Label className="text-sm font-medium">Email</Label>
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5 rounded-xl bg-background h-11" placeholder="you@example.com" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Password</Label>
+                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5 rounded-xl bg-background h-11" placeholder="••••••••" />
+                  </div>
+                  <Button type="submit" className="w-full rounded-xl font-medium h-11" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
                 </form>
               ) : phoneOTPFlow}
             </TabsContent>
@@ -178,11 +191,20 @@ const Auth = () => {
             <TabsContent value="signup">
               {method === "email" ? (
                 <form onSubmit={handleSignup} className="space-y-4">
-                  <div><Label className="font-mono text-[11px] tracking-wider">NAME</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required className="mt-1 rounded-sm bg-background" /></div>
-                  <div><Label className="font-mono text-[11px] tracking-wider">EMAIL</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1 rounded-sm bg-background" /></div>
-                  <div><Label className="font-mono text-[11px] tracking-wider">PASSWORD</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="mt-1 rounded-sm bg-background" /></div>
+                  <div>
+                    <Label className="text-sm font-medium">Name</Label>
+                    <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required className="mt-1.5 rounded-xl bg-background h-11" placeholder="Your full name" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Email</Label>
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5 rounded-xl bg-background h-11" placeholder="you@example.com" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Password</Label>
+                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="mt-1.5 rounded-xl bg-background h-11" placeholder="Min 6 characters" />
+                  </div>
                   {roleSelector}
-                  <Button type="submit" className="w-full rounded-sm font-mono text-[11px] tracking-wider" disabled={loading}>{loading ? "..." : "CREATE ACCOUNT"}</Button>
+                  <Button type="submit" className="w-full rounded-xl font-medium h-11" disabled={loading}>{loading ? "Creating account..." : "Create Account"}</Button>
                 </form>
               ) : phoneOTPFlow}
             </TabsContent>
