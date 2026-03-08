@@ -200,7 +200,56 @@ const FlyTo = ({ center, zoom }: { center: [number, number]; zoom?: number }) =>
   return null;
 };
 
-const Explore = () => {
+/* ── Imperative Marker Cluster layer ── */
+interface ClusterItem {
+  id: string;
+  lat: number;
+  lng: number;
+  icon: L.DivIcon;
+  onClick: () => void;
+}
+
+const MarkerClusterLayer = ({ items }: { items: ClusterItem[] }) => {
+  const map = useMap();
+  const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
+
+  useEffect(() => {
+    if (!clusterRef.current) {
+      clusterRef.current = (L as any).markerClusterGroup({
+        chunkedLoading: true,
+        maxClusterRadius: 60,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+      });
+      map.addLayer(clusterRef.current);
+    }
+
+    const group = clusterRef.current!;
+    group.clearLayers();
+
+    items.forEach((item) => {
+      const marker = L.marker([item.lat, item.lng], { icon: item.icon });
+      marker.on("click", item.onClick);
+      group.addLayer(marker);
+    });
+
+    return () => {
+      // cleanup on unmount
+    };
+  }, [items, map]);
+
+  useEffect(() => {
+    return () => {
+      if (clusterRef.current) {
+        map.removeLayer(clusterRef.current);
+      }
+    };
+  }, [map]);
+
+  return null;
+};
+
+
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [powerFilter, setPowerFilter] = useState("all");
