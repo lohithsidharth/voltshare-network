@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.seed-chargers]
 verify_jwt = false
+
+[functions.overpass-chargers]
+verify_jwt = false

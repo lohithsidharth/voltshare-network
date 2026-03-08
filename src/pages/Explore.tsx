@@ -25,13 +25,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-const chargerIcon = new L.DivIcon({
+const voltshareIcon = new L.DivIcon({
   html: `<div style="background:hsl(213,100%,50%);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px hsl(213,100%,50%,0.5);border:2px solid white;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
   </div>`,
   className: "",
   iconSize: [32, 32],
   iconAnchor: [16, 16],
+});
+
+const osmIcon = new L.DivIcon({
+  html: `<div style="background:hsl(38,92%,50%);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px hsl(38,92%,50%,0.5);border:2px solid white;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+  </div>`,
+  className: "",
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
 });
 
 const userIcon = new L.DivIcon({
@@ -136,16 +145,28 @@ const Explore = () => {
     clusterGroupRef.current.clearLayers();
 
     chargers.forEach((c) => {
-      const marker = L.marker([c.latitude, c.longitude], { icon: chargerIcon });
+      const icon = c.source === "osm" ? osmIcon : voltshareIcon;
+      const marker = L.marker([c.latitude, c.longitude], { icon });
+      const sourceTag = c.source === "osm"
+        ? `<span style="background:hsl(38,92%,50%);color:white;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;">OSM</span>`
+        : `<span style="background:hsl(213,100%,50%);color:white;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;">VoltShare</span>`;
+      const priceInfo = c.source === "voltshare" && c.price_per_kwh > 0
+        ? `<span>₹${c.price_per_kwh}/kWh</span>` : "";
+      const operatorInfo = c.source === "osm" && (c as any).operator
+        ? `<p style="margin:2px 0 0;font-size:11px;opacity:.6;">${(c as any).operator}</p>` : "";
       marker.bindPopup(`
         <div style="min-width:200px;padding:4px 2px;">
-          <h3 style="margin:0 0 6px 0;font-size:14px;font-weight:600;">${c.title}</h3>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            ${sourceTag}
+            <h3 style="margin:0;font-size:14px;font-weight:600;">${c.title}</h3>
+          </div>
           <div style="font-size:12px;opacity:.8;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-            <span>${c.power}kW</span>
-            <span>₹${c.price_per_kwh}/kWh</span>
-            <span>★ ${c.rating ?? "N/A"}</span>
+            ${c.power > 0 ? `<span>${c.power}kW</span>` : ""}
+            ${priceInfo}
+            ${c.rating ? `<span>★ ${c.rating}</span>` : ""}
           </div>
           <p style="margin:0;font-size:12px;opacity:.7;">${c.address}</p>
+          ${operatorInfo}
         </div>
       `);
       marker.on("click", () => setSelected(c));
