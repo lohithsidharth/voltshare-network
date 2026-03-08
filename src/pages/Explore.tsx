@@ -199,10 +199,10 @@ const Explore = () => {
       iconCreateFunction: (cluster) => {
         const count = cluster.getChildCount();
         return L.divIcon({
-          html: `<div style="background:hsl(213,100%,50%);width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;font-family:Outfit,sans-serif;box-shadow:0 0 20px hsl(213,100%,50%,0.4);border:2px solid hsla(0,0%,100%,0.2);">${count}</div>`,
+          html: `<div style="background:hsl(213,100%,50%);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:13px;font-family:Outfit,sans-serif;border:2px solid hsla(0,0%,100%,0.15);">${count}</div>`,
           className: "",
-          iconSize: [42, 42],
-          iconAnchor: [21, 21],
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
         });
       },
     });
