@@ -336,25 +336,21 @@ const Explore = () => {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="glass border-b border-border/50 px-4 py-3 flex items-center gap-3 animate-fade-in">
-          <div className="flex items-center gap-2">
-            <Battery className="w-4 h-4 text-primary" />
-            <Select value={powerFilter} onValueChange={setPowerFilter}>
-              <SelectTrigger className="w-36 bg-accent/50 border-none rounded-xl h-9 text-xs">
-                <SelectValue placeholder="Charger Speed" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Speeds</SelectItem>
-                <SelectItem value="standard">Standard (&lt;11kW)</SelectItem>
-                <SelectItem value="fast">Fast (≥11kW)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="border-b border-border px-4 py-2.5 flex items-center gap-3">
+          <Select value={powerFilter} onValueChange={setPowerFilter}>
+            <SelectTrigger className="w-36 bg-accent border-border rounded-md h-8 text-xs">
+              <SelectValue placeholder="Charger Speed" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Speeds</SelectItem>
+              <SelectItem value="standard">Standard (&lt;11kW)</SelectItem>
+              <SelectItem value="fast">Fast (≥11kW)</SelectItem>
+            </SelectContent>
+          </Select>
           {osmLoading && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              Loading stations...
-            </div>
+            <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" /> Loading...
+            </span>
           )}
         </div>
       )}
