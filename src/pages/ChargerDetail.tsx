@@ -13,6 +13,8 @@ import {
   MapPin, Star, Calendar as CalendarIcon, Navigation, Loader2, Lock, Heart,
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
+import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES, DARK_MAP_STYLES } from "@/lib/googleMaps";
 
 
 interface ChargerDetail {

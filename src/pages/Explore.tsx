@@ -1,10 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import "leaflet.markercluster";
-import "leaflet.markercluster/dist/MarkerCluster.css";
-import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import { GoogleMap, useJsApiLoader, MarkerF, MarkerClustererF } from "@react-google-maps/api";
 import { useOverpassChargers } from "@/hooks/useOverpassChargers";
 import { useChargers, Charger } from "@/hooks/useChargers";
 import { useOCMChargers, OCMCharger } from "@/hooks/useOCMChargers";
@@ -21,26 +16,24 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES, DARK_MAP_STYLES } from "@/lib/googleMaps";
 
-const DEFAULT_CENTER: [number, number] = [12.9716, 77.5946];
+const DEFAULT_CENTER = { lat: 12.9716, lng: 77.5946 };
 const DEFAULT_ZOOM = 12;
+const containerStyle = { width: "100%", height: "100%" };
 
-/* ── Leaflet Icons ── */
-const makeIcon = (color: string, size: number) =>
-  L.divIcon({
-    className: "",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid #0a0f1a;"></div>`,
-  });
+const makeMarkerSvg = (color: string, size: number) =>
+  `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${size/2-2}" fill="${color}" stroke="#0a0f1a" stroke-width="2"/></svg>`
+  )}`;
 
-const ICON_VOLTSHARE_AVAILABLE = makeIcon("#40d88e", 20);
-const ICON_VOLTSHARE_OCCUPIED = makeIcon("#e05252", 20);
-const ICON_OSM = makeIcon("#7a8494", 12);
-const ICON_OCM_AVAILABLE = makeIcon("#40d88e", 16);
-const ICON_OCM_OCCUPIED = makeIcon("#e05252", 16);
-const ICON_OCM_UNKNOWN = makeIcon("#7a8494", 16);
-const ICON_USER = makeIcon("#40d88e", 18);
+const ICON_VOLTSHARE_AVAILABLE = makeMarkerSvg("#40d88e", 20);
+const ICON_VOLTSHARE_OCCUPIED = makeMarkerSvg("#e05252", 20);
+const ICON_OSM = makeMarkerSvg("#7a8494", 12);
+const ICON_OCM_AVAILABLE = makeMarkerSvg("#40d88e", 16);
+const ICON_OCM_OCCUPIED = makeMarkerSvg("#e05252", 16);
+const ICON_OCM_UNKNOWN = makeMarkerSvg("#7a8494", 16);
+const ICON_USER = makeMarkerSvg("#40d88e", 18);
 
 /* ── OCM Detail Card ── */
 const OCMDetailCard = ({ charger, onClose }: { charger: OCMCharger; onClose: () => void }) => (
@@ -180,75 +173,6 @@ const OCMListCard = ({ charger, onClick }: { charger: OCMCharger; onClick: () =>
   </button>
 );
 
-/* ── Map event handler ── */
-const MapEvents = ({ onMoveEnd }: { onMoveEnd: (bounds: L.LatLngBounds, center: L.LatLng) => void }) => {
-  useMapEvents({
-    moveend: (e) => {
-      const map = e.target;
-      onMoveEnd(map.getBounds(), map.getCenter());
-    },
-  });
-  return null;
-};
-
-/* ── Fly to location helper ── */
-const FlyTo = ({ center, zoom }: { center: [number, number]; zoom?: number }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (center) map.flyTo(center, zoom ?? map.getZoom(), { duration: 1 });
-  }, [center[0], center[1]]);
-  return null;
-};
-
-/* ── Imperative Marker Cluster layer ── */
-interface ClusterItem {
-  id: string;
-  lat: number;
-  lng: number;
-  icon: L.DivIcon;
-  onClick: () => void;
-}
-
-const MarkerClusterLayer = ({ items }: { items: ClusterItem[] }) => {
-  const map = useMap();
-  const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
-
-  useEffect(() => {
-    if (!clusterRef.current) {
-      clusterRef.current = (L as any).markerClusterGroup({
-        chunkedLoading: true,
-        maxClusterRadius: 60,
-        spiderfyOnMaxZoom: true,
-        showCoverageOnHover: false,
-      });
-      map.addLayer(clusterRef.current);
-    }
-
-    const group = clusterRef.current!;
-    group.clearLayers();
-
-    items.forEach((item) => {
-      const marker = L.marker([item.lat, item.lng], { icon: item.icon });
-      marker.on("click", item.onClick);
-      group.addLayer(marker);
-    });
-
-    return () => {
-      // cleanup on unmount
-    };
-  }, [items, map]);
-
-  useEffect(() => {
-    return () => {
-      if (clusterRef.current) {
-        map.removeLayer(clusterRef.current);
-      }
-    };
-  }, [map]);
-
-  return null;
-};
-
 const Explore = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -259,8 +183,12 @@ const Explore = () => {
   const [userLng, setUserLng] = useState<number | null>(null);
   const [locating, setLocating] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: GOOGLE_MAPS_LIBRARIES,
+  });
 
   const { data: voltshareChargers = [], isLoading: vsLoading } = useChargers({
     search,
@@ -338,16 +266,23 @@ const Explore = () => {
   useEffect(() => {
     if (userLat != null && userLng != null) {
       fetchOCMChargers(userLat, userLng, 15);
-      setFlyTarget([userLat, userLng]);
+      if (mapRef.current) {
+        mapRef.current.panTo({ lat: userLat, lng: userLng });
+      }
     }
   }, [userLat, userLng]);
 
-  const onMapMoveEnd = useCallback((bounds: L.LatLngBounds, center: L.LatLng) => {
+  const onMapIdle = useCallback(() => {
+    if (!mapRef.current) return;
+    const bounds = mapRef.current.getBounds();
+    const center = mapRef.current.getCenter();
+    if (!bounds || !center) return;
+
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
-    fetchOSMChargers({ south: sw.lat, west: sw.lng, north: ne.lat, east: ne.lng });
-    fetchOCMChargers(center.lat, center.lng, 15);
-  }, []);
+    fetchOSMChargers({ south: sw.lat(), west: sw.lng(), north: ne.lat(), east: ne.lng() });
+    fetchOCMChargers(center.lat(), center.lng(), 15);
+  }, [fetchOSMChargers, fetchOCMChargers]);
 
   const handleLocateMe = () => {
     if ("geolocation" in navigator) {
@@ -357,7 +292,10 @@ const Explore = () => {
           setUserLat(pos.coords.latitude);
           setUserLng(pos.coords.longitude);
           setLocating(false);
-          setFlyTarget([pos.coords.latitude, pos.coords.longitude]);
+          if (mapRef.current) {
+            mapRef.current.panTo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            mapRef.current.setZoom(14);
+          }
         },
         () => setLocating(false),
         { timeout: 8000 }
@@ -378,10 +316,25 @@ const Explore = () => {
     return ICON_OCM_UNKNOWN;
   };
 
-  const mapCenter = useMemo<[number, number]>(() => {
-    if (userLat != null && userLng != null) return [userLat, userLng];
+  const mapCenter = useMemo(() => {
+    if (userLat != null && userLng != null) return { lat: userLat, lng: userLng };
     return DEFAULT_CENTER;
   }, [userLat, userLng]);
+
+  const mapOptions = {
+    styles: DARK_MAP_STYLES,
+    disableDefaultUI: true,
+    zoomControl: true,
+    zoomControlOptions: isLoaded ? { position: google.maps.ControlPosition.RIGHT_CENTER } : undefined,
+  };
+
+  if (!isLoaded) {
+    return (
+      <div className="pt-16 h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="pt-16 h-screen flex flex-col">
@@ -457,13 +410,13 @@ const Explore = () => {
             {filteredOCM.map((c) => (
               <OCMListCard key={`ocm-${c.ocm_id}`} charger={c} onClick={() => {
                 setSelectedOCM(c); setSelected(null);
-                setFlyTarget([c.latitude, c.longitude]);
+                if (mapRef.current) mapRef.current.panTo({ lat: c.latitude, lng: c.longitude });
               }} />
             ))}
             {allChargers.map((c) => (
               <ChargerCard key={c.id} charger={c} compact onSelect={(ch) => {
                 setSelected(ch); setSelectedOCM(null);
-                setFlyTarget([ch.latitude, ch.longitude]);
+                if (mapRef.current) mapRef.current.panTo({ lat: ch.latitude, lng: ch.longitude });
                 if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
               }} />
             ))}
@@ -478,65 +431,71 @@ const Explore = () => {
           )}
         </div>
 
-        {/* Leaflet Map */}
+        {/* Google Map */}
         <div className="flex-1 relative">
-          <MapContainer
+          <GoogleMap
+            mapContainerStyle={containerStyle}
             center={mapCenter}
             zoom={DEFAULT_ZOOM}
-            style={{ width: "100%", height: "100%" }}
-            zoomControl={false}
-            ref={mapRef}
-            className="z-0"
+            options={mapOptions}
+            onLoad={(map) => { mapRef.current = map; }}
+            onIdle={onMapIdle}
           >
-            <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
-            <MapEvents onMoveEnd={onMapMoveEnd} />
-            {flyTarget && <FlyTo center={flyTarget} />}
-
             {/* User location */}
             {userLat != null && userLng != null && (
-              <Marker position={[userLat, userLng]} icon={ICON_USER} />
+              <MarkerF
+                position={{ lat: userLat, lng: userLng }}
+                icon={{ url: ICON_USER, scaledSize: new google.maps.Size(18, 18) }}
+                zIndex={1000}
+              />
             )}
 
-            {/* Clustered charger markers */}
-            <MarkerClusterLayer
-              items={[
-                ...allChargers
-                  .filter((c) => c.latitude != null && c.longitude != null)
-                  .map((c) => ({
-                    id: c.id,
-                    lat: c.latitude,
-                    lng: c.longitude,
-                    icon: getChargerIcon(c),
-                    onClick: () => {
-                      if (c.source === "voltshare") {
-                        navigate(`/charger/${c.id}`);
-                      } else {
-                        setSelected(c);
-                        setSelectedOCM(null);
-                      }
-                    },
-                  })),
-                ...filteredOCM
-                  .filter((c) => c.latitude != null && c.longitude != null)
-                  .map((c) => ({
-                    id: `ocm-${c.ocm_id}`,
-                    lat: c.latitude,
-                    lng: c.longitude,
-                    icon: getOCMIcon(c),
-                    onClick: () => {
-                      setSelectedOCM(c);
-                      setSelected(null);
-                    },
-                  })),
-              ]}
-            />
-          </MapContainer>
+            {/* Clustered charger + OCM markers */}
+            <MarkerClustererF
+              options={{
+                maxZoom: 15,
+                gridSize: 60,
+                styles: [
+                  { textColor: "#fff", textSize: 12, url: makeMarkerSvg("#40d88e", 40), height: 40, width: 40 },
+                  { textColor: "#fff", textSize: 13, url: makeMarkerSvg("#40d88e", 50), height: 50, width: 50 },
+                  { textColor: "#fff", textSize: 14, url: makeMarkerSvg("#40d88e", 60), height: 60, width: 60 },
+                ],
+              }}
+            >
+              {(clusterer) => (
+                <>
+                  {allChargers
+                    .filter((c) => c.latitude != null && c.longitude != null)
+                    .map((c) => (
+                      <MarkerF
+                        key={c.id}
+                        position={{ lat: c.latitude, lng: c.longitude }}
+                        icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
+                        clusterer={clusterer}
+                        onClick={() => {
+                          if (c.source === "voltshare") navigate(`/charger/${c.id}`);
+                          else { setSelected(c); setSelectedOCM(null); }
+                        }}
+                      />
+                    ))}
+                  {filteredOCM
+                    .filter((c) => c.latitude != null && c.longitude != null)
+                    .map((c) => (
+                      <MarkerF
+                        key={`ocm-${c.ocm_id}`}
+                        position={{ lat: c.latitude, lng: c.longitude }}
+                        icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
+                        clusterer={clusterer}
+                        onClick={() => { setSelectedOCM(c); setSelected(null); }}
+                      />
+                    ))}
+                </>
+              )}
+            </MarkerClustererF>
+          </GoogleMap>
 
           {/* Legend */}
-          <div className="absolute top-3 left-3 z-[1000] bg-card/90 backdrop-blur-sm border border-border/50 rounded-xl px-3 py-2.5 space-y-1.5">
+          <div className="absolute top-3 left-3 z-10 bg-card/90 backdrop-blur-sm border border-border/50 rounded-xl px-3 py-2.5 space-y-1.5">
             {[
               { color: "bg-primary", label: "Available" },
               { color: "bg-destructive", label: "Busy / Offline" },
@@ -550,7 +509,7 @@ const Explore = () => {
           </div>
 
           {/* Mobile list */}
-          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-[1000] bg-background/95 backdrop-blur-sm border-t border-border/50 max-h-[35vh] overflow-y-auto p-3 space-y-2">
+          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-t border-border/50 max-h-[35vh] overflow-y-auto p-3 space-y-2">
             {filteredOCM.slice(0, 4).map((c) => (
               <OCMListCard key={`ocm-m-${c.ocm_id}`} charger={c} onClick={() => { setSelectedOCM(c); setSelected(null); }} />
             ))}
@@ -564,14 +523,14 @@ const Explore = () => {
 
           {/* Selected OCM detail panel */}
           {selectedOCM && (
-            <div className="absolute right-3 top-3 w-80 z-[1000] animate-slide-in-right hidden md:block">
+            <div className="absolute right-3 top-3 w-80 z-10 animate-slide-in-right hidden md:block">
               <OCMDetailCard charger={selectedOCM} onClose={() => setSelectedOCM(null)} />
             </div>
           )}
 
           {/* Selected VoltShare/OSM panel */}
           {selected && !selectedOCM && (
-            <div className="hidden md:block absolute right-3 top-3 w-80 z-[1000] animate-slide-in-right">
+            <div className="hidden md:block absolute right-3 top-3 w-80 z-10 animate-slide-in-right">
               <div className="relative">
                 <button
                   className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-card border border-border/50 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
