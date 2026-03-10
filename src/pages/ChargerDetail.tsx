@@ -13,6 +13,8 @@ import {
   MapPin, Star, Calendar as CalendarIcon, Navigation, Loader2, Lock, Heart,
 } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
+import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES, DARK_MAP_STYLES } from "@/lib/googleMaps";
 
 
 interface ChargerDetail {
@@ -39,6 +41,7 @@ const ChargerDetailPage = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_API_KEY, libraries: GOOGLE_MAPS_LIBRARIES });
   
   const [charger, setCharger] = useState<ChargerDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -220,7 +223,26 @@ const ChargerDetailPage = () => {
                 <p className="font-heading text-xl font-bold mt-1">{charger.rating} <span className="text-sm text-muted-foreground">({charger.review_count})</span></p>
               </div>
             )}
+
+
+          {/* Location Map */}
+          <div className="mt-6 rounded-xl overflow-hidden border border-border h-48">
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "100%" }}
+                center={{ lat: charger.latitude, lng: charger.longitude }}
+                zoom={15}
+                options={{ styles: DARK_MAP_STYLES, disableDefaultUI: true, zoomControl: true }}
+              >
+                <MarkerF position={{ lat: charger.latitude, lng: charger.longitude }} />
+              </GoogleMap>
+            ) : (
+              <div className="w-full h-full bg-muted flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
           </div>
+        </div>
         </div>
 
         {/* Booking */}
