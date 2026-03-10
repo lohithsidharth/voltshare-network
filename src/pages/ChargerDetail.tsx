@@ -222,7 +222,26 @@ const ChargerDetailPage = () => {
                 <p className="font-heading text-xl font-bold mt-1">{charger.rating} <span className="text-sm text-muted-foreground">({charger.review_count})</span></p>
               </div>
             )}
+
+
+          {/* Location Map */}
+          <div className="mt-6 rounded-xl overflow-hidden border border-border h-48">
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "100%" }}
+                center={{ lat: charger.latitude, lng: charger.longitude }}
+                zoom={15}
+                options={{ styles: DARK_MAP_STYLES, disableDefaultUI: true, zoomControl: true }}
+              >
+                <MarkerF position={{ lat: charger.latitude, lng: charger.longitude }} />
+              </GoogleMap>
+            ) : (
+              <div className="w-full h-full bg-muted flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
           </div>
+        </div>
         </div>
 
         {/* Booking */}
