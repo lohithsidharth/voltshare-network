@@ -452,47 +452,49 @@ const Explore = () => {
             )}
 
             {/* Clustered charger + OCM markers */}
-            <MarkerClustererF
-              options={{
-                maxZoom: 15,
-                gridSize: 60,
-                styles: [
-                  { textColor: "#fff", textSize: 12, url: makeMarkerSvg("#40d88e", 40), height: 40, width: 40 },
-                  { textColor: "#fff", textSize: 13, url: makeMarkerSvg("#40d88e", 50), height: 50, width: 50 },
-                  { textColor: "#fff", textSize: 14, url: makeMarkerSvg("#40d88e", 60), height: 60, width: 60 },
-                ],
-              }}
-            >
-              {(clusterer) => (
-                <>
-                  {allChargers
-                    .filter((c) => c.latitude != null && c.longitude != null)
-                    .map((c) => (
-                      <MarkerF
-                        key={c.id}
-                        position={{ lat: c.latitude, lng: c.longitude }}
-                        icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
-                        clusterer={clusterer}
-                        onClick={() => {
-                          if (c.source === "voltshare") navigate(`/charger/${c.id}`);
-                          else { setSelected(c); setSelectedOCM(null); }
-                        }}
-                      />
-                    ))}
-                  {filteredOCM
-                    .filter((c) => c.latitude != null && c.longitude != null)
-                    .map((c) => (
-                      <MarkerF
-                        key={`ocm-${c.ocm_id}`}
-                        position={{ lat: c.latitude, lng: c.longitude }}
-                        icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
-                        clusterer={clusterer}
-                        onClick={() => { setSelectedOCM(c); setSelected(null); }}
-                      />
-                    ))}
-                </>
-              )}
-            </MarkerClustererF>
+            {mapReady && (
+              <MarkerClustererF
+                options={{
+                  maxZoom: 15,
+                  gridSize: 60,
+                  styles: [
+                    { textColor: "#fff", textSize: 12, url: makeMarkerSvg("#40d88e", 40), height: 40, width: 40 },
+                    { textColor: "#fff", textSize: 13, url: makeMarkerSvg("#40d88e", 50), height: 50, width: 50 },
+                    { textColor: "#fff", textSize: 14, url: makeMarkerSvg("#40d88e", 60), height: 60, width: 60 },
+                  ],
+                }}
+              >
+                {(clusterer) => (
+                  <>
+                    {allChargers
+                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
+                      .map((c) => (
+                        <MarkerF
+                          key={c.id}
+                          position={{ lat: c.latitude, lng: c.longitude }}
+                          icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
+                          clusterer={clusterer}
+                          onClick={() => {
+                            if (c.source === "voltshare") navigate(`/charger/${c.id}`);
+                            else { setSelected(c); setSelectedOCM(null); }
+                          }}
+                        />
+                      ))}
+                    {filteredOCM
+                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
+                      .map((c) => (
+                        <MarkerF
+                          key={`ocm-${c.ocm_id}`}
+                          position={{ lat: c.latitude, lng: c.longitude }}
+                          icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
+                          clusterer={clusterer}
+                          onClick={() => { setSelectedOCM(c); setSelected(null); }}
+                        />
+                      ))}
+                  </>
+                )}
+              </MarkerClustererF>
+            )}
           </GoogleMap>
 
           {/* Legend */}
