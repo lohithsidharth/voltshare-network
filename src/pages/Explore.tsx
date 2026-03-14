@@ -181,6 +181,7 @@ const Explore = () => {
   const [selectedOCM, setSelectedOCM] = useState<OCMCharger | null>(null);
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [locating, setLocating] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
