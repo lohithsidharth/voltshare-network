@@ -20,6 +20,6 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom", "react/jsx-runtime"],
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "react-leaflet", "@react-leaflet/core", "leaflet", "leaflet.markercluster"],
+    include: ["react", "react-dom", "@react-google-maps/api"],
   },
 }));
