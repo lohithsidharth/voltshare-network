@@ -439,7 +439,7 @@ const Explore = () => {
             center={mapCenter}
             zoom={DEFAULT_ZOOM}
             options={mapOptions}
-            onLoad={(map) => { mapRef.current = map; }}
+            onLoad={(map) => { mapRef.current = map; setMapReady(true); }}
             onIdle={onMapIdle}
           >
             {/* User location */}
