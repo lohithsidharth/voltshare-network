@@ -503,6 +503,19 @@ const Explore = () => {
                           onClick={() => { setSelectedOCM(c); setSelected(null); }}
                         />
                       ))}
+                    {filteredGP
+                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
+                      .map((c) => (
+                        <MarkerF
+                          key={c.id}
+                          position={{ lat: c.latitude, lng: c.longitude }}
+                          icon={{ url: ICON_GP, scaledSize: new google.maps.Size(14, 14) }}
+                          clusterer={clusterer}
+                          onClick={() => {
+                            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.title)}&query_place_id=${c.placeId}`, "_blank");
+                          }}
+                        />
+                      ))}
                   </>
                 )}
               </MarkerClustererF>
@@ -514,6 +527,7 @@ const Explore = () => {
             {[
               { color: "bg-primary", label: "Available" },
               { color: "bg-destructive", label: "Busy / Offline" },
+              { color: "bg-amber-500", label: "Google Places" },
               { color: "bg-muted-foreground", label: "Unknown" },
             ].map((l) => (
               <div key={l.label} className="flex items-center gap-2 text-xs text-muted-foreground">
