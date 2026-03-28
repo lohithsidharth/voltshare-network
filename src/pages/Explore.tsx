@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { GoogleMap, useJsApiLoader, MarkerF, MarkerClustererF } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import { useOverpassChargers } from "@/hooks/useOverpassChargers";
 import { useChargers, Charger } from "@/hooks/useChargers";
 import { useOCMChargers, OCMCharger } from "@/hooks/useOCMChargers";
@@ -184,7 +184,7 @@ const Explore = () => {
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const [mapHasBounds, setMapHasBounds] = useState(false);
+  
   const [locating, setLocating] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
