@@ -184,6 +184,7 @@ const Explore = () => {
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapHasBounds, setMapHasBounds] = useState(false);
   const [locating, setLocating] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -204,6 +205,10 @@ const Explore = () => {
   const { chargers: ocmChargers, loading: ocmLoading, fetchChargers: fetchOCMChargers } = useOCMChargers();
 
   const isLoading = vsLoading || osmLoading || ocmLoading;
+
+  const isValidCoordinate = (lat: number, lng: number) => (
+    Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+  );
 
   const osmAsChargers: Charger[] = osmChargers
     .filter((c) => {
@@ -243,6 +248,19 @@ const Explore = () => {
   }, [search]);
 
   const allChargers = [...voltshareChargers, ...osmAsChargers];
+  const safeAllChargers = useMemo(
+    () => allChargers.filter((c) => isValidCoordinate(c.latitude, c.longitude)),
+    [allChargers]
+  );
+  const safeOCMChargers = useMemo(
+    () => filteredOCM.filter((c) => isValidCoordinate(c.latitude, c.longitude)),
+    [filteredOCM]
+  );
+  const safeGPChargers = useMemo(
+    () => filteredGP.filter((c) => isValidCoordinate(c.latitude, c.longitude)),
+    [filteredGP]
+  );
+
   const totalCount = allChargers.length + filteredOCM.length + filteredGP.length;
 
   const recommendedCharger = useMemo(() => {
@@ -263,7 +281,6 @@ const Explore = () => {
     return scored[0]?.charger || null;
   }, [allChargers, userLat, userLng]);
 
-  // Get user location
   useEffect(() => {
     if ("geolocation" in navigator) {
       setLocating(true);
@@ -275,7 +292,6 @@ const Explore = () => {
     }
   }, []);
 
-  // Fetch OCM when user location changes
   useEffect(() => {
     if (userLat != null && userLng != null) {
       fetchOCMChargers(userLat, userLng, 15);
@@ -290,6 +306,8 @@ const Explore = () => {
     const bounds = mapRef.current.getBounds();
     const center = mapRef.current.getCenter();
     if (!bounds || !center) return;
+
+    setMapHasBounds(true);
 
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
@@ -465,7 +483,7 @@ const Explore = () => {
             )}
 
             {/* Clustered charger + OCM markers */}
-            {mapReady && (
+            {mapReady && mapHasBounds && (
               <MarkerClustererF
                 options={{
                   maxZoom: 15,
@@ -479,44 +497,38 @@ const Explore = () => {
               >
                 {(clusterer) => (
                   <>
-                    {allChargers
-                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
-                      .map((c) => (
-                        <MarkerF
-                          key={c.id}
-                          position={{ lat: c.latitude, lng: c.longitude }}
-                          icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
-                          clusterer={clusterer}
-                          onClick={() => {
-                            if (c.source === "voltshare") navigate(`/charger/${c.id}`);
-                            else { setSelected(c); setSelectedOCM(null); }
-                          }}
-                        />
-                      ))}
-                    {filteredOCM
-                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
-                      .map((c) => (
-                        <MarkerF
-                          key={`ocm-${c.ocm_id}`}
-                          position={{ lat: c.latitude, lng: c.longitude }}
-                          icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
-                          clusterer={clusterer}
-                          onClick={() => { setSelectedOCM(c); setSelected(null); }}
-                        />
-                      ))}
-                    {filteredGP
-                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
-                      .map((c) => (
-                        <MarkerF
-                          key={c.id}
-                          position={{ lat: c.latitude, lng: c.longitude }}
-                          icon={{ url: ICON_GP, scaledSize: new google.maps.Size(14, 14) }}
-                          clusterer={clusterer}
-                          onClick={() => {
-                            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.title)}&query_place_id=${c.placeId}`, "_blank");
-                          }}
-                        />
-                      ))}
+                    {safeAllChargers.map((c) => (
+                      <MarkerF
+                        key={`${c.source}-${c.id}`}
+                        position={{ lat: c.latitude, lng: c.longitude }}
+                        icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
+                        clusterer={clusterer}
+                        onClick={() => {
+                          if (c.source === "voltshare") navigate(`/charger/${c.id}`);
+                          else { setSelected(c); setSelectedOCM(null); }
+                        }}
+                      />
+                    ))}
+                    {safeOCMChargers.map((c) => (
+                      <MarkerF
+                        key={`ocm-${c.ocm_id}`}
+                        position={{ lat: c.latitude, lng: c.longitude }}
+                        icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
+                        clusterer={clusterer}
+                        onClick={() => { setSelectedOCM(c); setSelected(null); }}
+                      />
+                    ))}
+                    {safeGPChargers.map((c) => (
+                      <MarkerF
+                        key={c.id}
+                        position={{ lat: c.latitude, lng: c.longitude }}
+                        icon={{ url: ICON_GP, scaledSize: new google.maps.Size(14, 14) }}
+                        clusterer={clusterer}
+                        onClick={() => {
+                          window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.title)}&query_place_id=${c.placeId}`, "_blank");
+                        }}
+                      />
+                    ))}
                   </>
                 )}
               </MarkerClustererF>
@@ -581,3 +593,4 @@ const Explore = () => {
 };
 
 export default Explore;
+
