@@ -232,8 +232,18 @@ const Explore = () => {
     return true;
   });
 
+  const filteredGP = useMemo(() => {
+    return googlePlacesChargers.filter((c) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!c.title.toLowerCase().includes(q) && !c.address.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [search]);
+
   const allChargers = [...voltshareChargers, ...osmAsChargers];
-  const totalCount = allChargers.length + filteredOCM.length;
+  const totalCount = allChargers.length + filteredOCM.length + filteredGP.length;
 
   const recommendedCharger = useMemo(() => {
     const available = allChargers.filter(c => c.source === "voltshare" && c.is_active);
