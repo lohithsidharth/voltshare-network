@@ -3,6 +3,7 @@ import { GoogleMap, useJsApiLoader, MarkerF, MarkerClustererF } from "@react-goo
 import { useOverpassChargers } from "@/hooks/useOverpassChargers";
 import { useChargers, Charger } from "@/hooks/useChargers";
 import { useOCMChargers, OCMCharger } from "@/hooks/useOCMChargers";
+import { googlePlacesChargers, GooglePlacesCharger } from "@/data/googlePlacesChargers";
 import ChargerCard from "@/components/ChargerCard";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ const ICON_OSM = makeMarkerSvg("#7a8494", 12);
 const ICON_OCM_AVAILABLE = makeMarkerSvg("#40d88e", 16);
 const ICON_OCM_OCCUPIED = makeMarkerSvg("#e05252", 16);
 const ICON_OCM_UNKNOWN = makeMarkerSvg("#7a8494", 16);
+const ICON_GP = makeMarkerSvg("#f59e0b", 14);
 const ICON_USER = makeMarkerSvg("#40d88e", 18);
 
 /* ── OCM Detail Card ── */
@@ -230,8 +232,18 @@ const Explore = () => {
     return true;
   });
 
+  const filteredGP = useMemo(() => {
+    return googlePlacesChargers.filter((c) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!c.title.toLowerCase().includes(q) && !c.address.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [search]);
+
   const allChargers = [...voltshareChargers, ...osmAsChargers];
-  const totalCount = allChargers.length + filteredOCM.length;
+  const totalCount = allChargers.length + filteredOCM.length + filteredGP.length;
 
   const recommendedCharger = useMemo(() => {
     const available = allChargers.filter(c => c.source === "voltshare" && c.is_active);
@@ -403,6 +415,7 @@ const Explore = () => {
             <div className="flex gap-3 text-xs text-muted-foreground">
               <span>{voltshareChargers.length} VoltShare</span>
               <span>{filteredOCM.length} OCM</span>
+              <span>{filteredGP.length} Google</span>
               <span>{osmAsChargers.length} OSM</span>
             </div>
           </div>
@@ -491,6 +504,19 @@ const Explore = () => {
                           onClick={() => { setSelectedOCM(c); setSelected(null); }}
                         />
                       ))}
+                    {filteredGP
+                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
+                      .map((c) => (
+                        <MarkerF
+                          key={c.id}
+                          position={{ lat: c.latitude, lng: c.longitude }}
+                          icon={{ url: ICON_GP, scaledSize: new google.maps.Size(14, 14) }}
+                          clusterer={clusterer}
+                          onClick={() => {
+                            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.title)}&query_place_id=${c.placeId}`, "_blank");
+                          }}
+                        />
+                      ))}
                   </>
                 )}
               </MarkerClustererF>
@@ -502,6 +528,7 @@ const Explore = () => {
             {[
               { color: "bg-primary", label: "Available" },
               { color: "bg-destructive", label: "Busy / Offline" },
+              { color: "bg-amber-500", label: "Google Places" },
               { color: "bg-muted-foreground", label: "Unknown" },
             ].map((l) => (
               <div key={l.label} className="flex items-center gap-2 text-xs text-muted-foreground">
