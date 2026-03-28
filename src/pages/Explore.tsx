@@ -184,6 +184,7 @@ const Explore = () => {
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapHasBounds, setMapHasBounds] = useState(false);
   const [locating, setLocating] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -204,6 +205,10 @@ const Explore = () => {
   const { chargers: ocmChargers, loading: ocmLoading, fetchChargers: fetchOCMChargers } = useOCMChargers();
 
   const isLoading = vsLoading || osmLoading || ocmLoading;
+
+  const isValidCoordinate = (lat: number, lng: number) => (
+    Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+  );
 
   const osmAsChargers: Charger[] = osmChargers
     .filter((c) => {
@@ -243,6 +248,19 @@ const Explore = () => {
   }, [search]);
 
   const allChargers = [...voltshareChargers, ...osmAsChargers];
+  const safeAllChargers = useMemo(
+    () => allChargers.filter((c) => isValidCoordinate(c.latitude, c.longitude)),
+    [allChargers]
+  );
+  const safeOCMChargers = useMemo(
+    () => filteredOCM.filter((c) => isValidCoordinate(c.latitude, c.longitude)),
+    [filteredOCM]
+  );
+  const safeGPChargers = useMemo(
+    () => filteredGP.filter((c) => isValidCoordinate(c.latitude, c.longitude)),
+    [filteredGP]
+  );
+
   const totalCount = allChargers.length + filteredOCM.length + filteredGP.length;
 
   const recommendedCharger = useMemo(() => {
@@ -263,7 +281,6 @@ const Explore = () => {
     return scored[0]?.charger || null;
   }, [allChargers, userLat, userLng]);
 
-  // Get user location
   useEffect(() => {
     if ("geolocation" in navigator) {
       setLocating(true);
@@ -275,7 +292,6 @@ const Explore = () => {
     }
   }, []);
 
-  // Fetch OCM when user location changes
   useEffect(() => {
     if (userLat != null && userLng != null) {
       fetchOCMChargers(userLat, userLng, 15);
@@ -290,6 +306,8 @@ const Explore = () => {
     const bounds = mapRef.current.getBounds();
     const center = mapRef.current.getCenter();
     if (!bounds || !center) return;
+
+    setMapHasBounds(true);
 
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
@@ -465,7 +483,7 @@ const Explore = () => {
             )}
 
             {/* Clustered charger + OCM markers */}
-            {mapReady && (
+            {mapReady && mapHasBounds && (
               <MarkerClustererF
                 options={{
                   maxZoom: 15,
@@ -479,45 +497,100 @@ const Explore = () => {
               >
                 {(clusterer) => (
                   <>
-                    {allChargers
-                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
-                      .map((c) => (
-                        <MarkerF
-                          key={c.id}
-                          position={{ lat: c.latitude, lng: c.longitude }}
-                          icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
-                          clusterer={clusterer}
-                          onClick={() => {
-                            if (c.source === "voltshare") navigate(`/charger/${c.id}`);
-                            else { setSelected(c); setSelectedOCM(null); }
-                          }}
-                        />
-                      ))}
-                    {filteredOCM
-                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
-                      .map((c) => (
-                        <MarkerF
-                          key={`ocm-${c.ocm_id}`}
-                          position={{ lat: c.latitude, lng: c.longitude }}
-                          icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
-                          clusterer={clusterer}
-                          onClick={() => { setSelectedOCM(c); setSelected(null); }}
-                        />
-                      ))}
-                    {filteredGP
-                      .filter((c) => c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude))
-                      .map((c) => (
-                        <MarkerF
-                          key={c.id}
-                          position={{ lat: c.latitude, lng: c.longitude }}
-                          icon={{ url: ICON_GP, scaledSize: new google.maps.Size(14, 14) }}
-                          clusterer={clusterer}
-                          onClick={() => {
-                            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.title)}&query_place_id=${c.placeId}`, "_blank");
-                          }}
-                        />
-                      ))}
+                    {safeAllChargers.map((c) => (
+                      <MarkerF
+                        key={`${c.source}-${c.id}`}
+                        position={{ lat: c.latitude, lng: c.longitude }}
+                        icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
+                        clusterer={clusterer}
+                        onClick={() => {
+                          if (c.source === "voltshare") navigate(`/charger/${c.id}`);
+                          else { setSelected(c); setSelectedOCM(null); }
+                        }}
+                      />
+                    ))}
+                    {safeOCMChargers.map((c) => (
+                      <MarkerF
+                        key={`ocm-${c.ocm_id}`}
+                        position={{ lat: c.latitude, lng: c.longitude }}
+                        icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
+                        clusterer={clusterer}
+                        onClick={() => { setSelectedOCM(c); setSelected(null); }}
+                      />
+                    ))}
+                    {safeGPChargers.map((c) => (
+                      <MarkerF
+                        key={c.id}
+                        position={{ lat: c.latitude, lng: c.longitude }}
+                        icon={{ url: ICON_GP, scaledSize: new google.maps.Size(14, 14) }}
+                        clusterer={clusterer}
+                        onClick={() => {
+                          window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.title)}&query_place_id=${c.placeId}`, "_blank");
+                        }}
+                      />
+                    ))}
                   </>
+                )}
+              </MarkerClustererF>
+            )}
+          </GoogleMap>
+
+          {/* Legend */}
+          <div className="absolute top-3 left-3 z-10 bg-card/90 backdrop-blur-sm border border-border/50 rounded-xl px-3 py-2.5 space-y-1.5">
+            {[
+              { color: "bg-primary", label: "Available" },
+              { color: "bg-destructive", label: "Busy / Offline" },
+              { color: "bg-amber-500", label: "Google Places" },
+              { color: "bg-muted-foreground", label: "Unknown" },
+            ].map((l) => (
+              <div key={l.label} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className={cn("w-2.5 h-2.5 rounded-full", l.color)} />
+                {l.label}
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile list */}
+          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-t border-border/50 max-h-[35vh] overflow-y-auto p-3 space-y-2">
+            {filteredOCM.slice(0, 4).map((c) => (
+              <OCMListCard key={`ocm-m-${c.ocm_id}`} charger={c} onClick={() => { setSelectedOCM(c); setSelected(null); }} />
+            ))}
+            {allChargers.slice(0, 4).map((c) => (
+              <ChargerCard key={c.id} charger={c} compact onSelect={(ch) => {
+                setSelected(ch); setSelectedOCM(null);
+                if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
+              }} />
+            ))}
+          </div>
+
+          {/* Selected OCM detail panel */}
+          {selectedOCM && (
+            <div className="absolute right-3 top-3 w-80 z-10 animate-slide-in-right hidden md:block">
+              <OCMDetailCard charger={selectedOCM} onClose={() => setSelectedOCM(null)} />
+            </div>
+          )}
+
+          {/* Selected VoltShare/OSM panel */}
+          {selected && !selectedOCM && (
+            <div className="hidden md:block absolute right-3 top-3 w-80 z-10 animate-slide-in-right">
+              <div className="relative">
+                <button
+                  className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-card border border-border/50 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+                  onClick={() => setSelected(null)}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+                <ChargerCard charger={selected} onSelect={(ch) => {
+                  if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
+                }} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
                 )}
               </MarkerClustererF>
             )}
