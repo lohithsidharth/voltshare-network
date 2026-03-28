@@ -3,6 +3,7 @@ import { GoogleMap, useJsApiLoader, MarkerF, MarkerClustererF } from "@react-goo
 import { useOverpassChargers } from "@/hooks/useOverpassChargers";
 import { useChargers, Charger } from "@/hooks/useChargers";
 import { useOCMChargers, OCMCharger } from "@/hooks/useOCMChargers";
+import { googlePlacesChargers, GooglePlacesCharger } from "@/data/googlePlacesChargers";
 import ChargerCard from "@/components/ChargerCard";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ const ICON_OSM = makeMarkerSvg("#7a8494", 12);
 const ICON_OCM_AVAILABLE = makeMarkerSvg("#40d88e", 16);
 const ICON_OCM_OCCUPIED = makeMarkerSvg("#e05252", 16);
 const ICON_OCM_UNKNOWN = makeMarkerSvg("#7a8494", 16);
+const ICON_GP = makeMarkerSvg("#f59e0b", 14);
 const ICON_USER = makeMarkerSvg("#40d88e", 18);
 
 /* ── OCM Detail Card ── */
