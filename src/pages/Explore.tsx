@@ -415,6 +415,7 @@ const Explore = () => {
             <div className="flex gap-3 text-xs text-muted-foreground">
               <span>{voltshareChargers.length} VoltShare</span>
               <span>{filteredOCM.length} OCM</span>
+              <span>{filteredGP.length} Google</span>
               <span>{osmAsChargers.length} OSM</span>
             </div>
           </div>
