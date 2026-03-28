@@ -307,7 +307,7 @@ const Explore = () => {
     const center = mapRef.current.getCenter();
     if (!bounds || !center) return;
 
-    setMapHasBounds(true);
+    
 
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
