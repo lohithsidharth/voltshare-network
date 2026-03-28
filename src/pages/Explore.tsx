@@ -590,67 +590,7 @@ const Explore = () => {
       </div>
     </div>
   );
-
-                )}
-              </MarkerClustererF>
-            )}
-          </GoogleMap>
-
-          {/* Legend */}
-          <div className="absolute top-3 left-3 z-10 bg-card/90 backdrop-blur-sm border border-border/50 rounded-xl px-3 py-2.5 space-y-1.5">
-            {[
-              { color: "bg-primary", label: "Available" },
-              { color: "bg-destructive", label: "Busy / Offline" },
-              { color: "bg-amber-500", label: "Google Places" },
-              { color: "bg-muted-foreground", label: "Unknown" },
-            ].map((l) => (
-              <div key={l.label} className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className={cn("w-2.5 h-2.5 rounded-full", l.color)} />
-                {l.label}
-              </div>
-            ))}
-          </div>
-
-          {/* Mobile list */}
-          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-t border-border/50 max-h-[35vh] overflow-y-auto p-3 space-y-2">
-            {filteredOCM.slice(0, 4).map((c) => (
-              <OCMListCard key={`ocm-m-${c.ocm_id}`} charger={c} onClick={() => { setSelectedOCM(c); setSelected(null); }} />
-            ))}
-            {allChargers.slice(0, 4).map((c) => (
-              <ChargerCard key={c.id} charger={c} compact onSelect={(ch) => {
-                setSelected(ch); setSelectedOCM(null);
-                if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
-              }} />
-            ))}
-          </div>
-
-          {/* Selected OCM detail panel */}
-          {selectedOCM && (
-            <div className="absolute right-3 top-3 w-80 z-10 animate-slide-in-right hidden md:block">
-              <OCMDetailCard charger={selectedOCM} onClose={() => setSelectedOCM(null)} />
-            </div>
-          )}
-
-          {/* Selected VoltShare/OSM panel */}
-          {selected && !selectedOCM && (
-            <div className="hidden md:block absolute right-3 top-3 w-80 z-10 animate-slide-in-right">
-              <div className="relative">
-                <button
-                  className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-card border border-border/50 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
-                  onClick={() => setSelected(null)}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-                <ChargerCard charger={selected} onSelect={(ch) => {
-                  if (ch.source === "voltshare") navigate(`/charger/${ch.id}`);
-                }} />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 };
 
 export default Explore;
+
