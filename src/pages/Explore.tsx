@@ -482,57 +482,36 @@ const Explore = () => {
               />
             )}
 
-            {/* Clustered charger + OCM markers */}
-            {mapReady && mapHasBounds && (
-              <MarkerClustererF
-                options={{
-                  maxZoom: 15,
-                  gridSize: 60,
-                  styles: [
-                    { textColor: "#fff", textSize: 12, url: makeMarkerSvg("#40d88e", 40), height: 40, width: 40 },
-                    { textColor: "#fff", textSize: 13, url: makeMarkerSvg("#40d88e", 50), height: 50, width: 50 },
-                    { textColor: "#fff", textSize: 14, url: makeMarkerSvg("#40d88e", 60), height: 60, width: 60 },
-                  ],
+            {/* Individual markers (no clustering – avoids MarkerClustererF crash when map has no valid bounds) */}
+            {mapReady && safeAllChargers.map((c) => (
+              <MarkerF
+                key={`${c.source}-${c.id}`}
+                position={{ lat: c.latitude, lng: c.longitude }}
+                icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
+                onClick={() => {
+                  if (c.source === "voltshare") navigate(`/charger/${c.id}`);
+                  else { setSelected(c); setSelectedOCM(null); }
                 }}
-              >
-                {(clusterer) => (
-                  <>
-                    {safeAllChargers.map((c) => (
-                      <MarkerF
-                        key={`${c.source}-${c.id}`}
-                        position={{ lat: c.latitude, lng: c.longitude }}
-                        icon={{ url: getChargerIcon(c), scaledSize: new google.maps.Size(c.source === "osm" ? 12 : 20, c.source === "osm" ? 12 : 20) }}
-                        clusterer={clusterer}
-                        onClick={() => {
-                          if (c.source === "voltshare") navigate(`/charger/${c.id}`);
-                          else { setSelected(c); setSelectedOCM(null); }
-                        }}
-                      />
-                    ))}
-                    {safeOCMChargers.map((c) => (
-                      <MarkerF
-                        key={`ocm-${c.ocm_id}`}
-                        position={{ lat: c.latitude, lng: c.longitude }}
-                        icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
-                        clusterer={clusterer}
-                        onClick={() => { setSelectedOCM(c); setSelected(null); }}
-                      />
-                    ))}
-                    {safeGPChargers.map((c) => (
-                      <MarkerF
-                        key={c.id}
-                        position={{ lat: c.latitude, lng: c.longitude }}
-                        icon={{ url: ICON_GP, scaledSize: new google.maps.Size(14, 14) }}
-                        clusterer={clusterer}
-                        onClick={() => {
-                          window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.title)}&query_place_id=${c.placeId}`, "_blank");
-                        }}
-                      />
-                    ))}
-                  </>
-                )}
-              </MarkerClustererF>
-            )}
+              />
+            ))}
+            {mapReady && safeOCMChargers.map((c) => (
+              <MarkerF
+                key={`ocm-${c.ocm_id}`}
+                position={{ lat: c.latitude, lng: c.longitude }}
+                icon={{ url: getOCMIcon(c), scaledSize: new google.maps.Size(16, 16) }}
+                onClick={() => { setSelectedOCM(c); setSelected(null); }}
+              />
+            ))}
+            {mapReady && safeGPChargers.map((c) => (
+              <MarkerF
+                key={c.id}
+                position={{ lat: c.latitude, lng: c.longitude }}
+                icon={{ url: ICON_GP, scaledSize: new google.maps.Size(14, 14) }}
+                onClick={() => {
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.title)}&query_place_id=${c.placeId}`, "_blank");
+                }}
+              />
+            ))}
           </GoogleMap>
 
           {/* Legend */}
