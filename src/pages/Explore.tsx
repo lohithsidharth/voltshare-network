@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import { useOverpassChargers } from "@/hooks/useOverpassChargers";
 import { useChargers, Charger } from "@/hooks/useChargers";
 import { useOCMChargers, OCMCharger } from "@/hooks/useOCMChargers";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsLoader";
 import { googlePlacesChargers, GooglePlacesCharger } from "@/data/googlePlacesChargers";
 import ChargerCard from "@/components/ChargerCard";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES, DARK_MAP_STYLES } from "@/lib/googleMaps";
+import { DARK_MAP_STYLES } from "@/lib/googleMaps";
 
 const DEFAULT_CENTER = { lat: 12.9716, lng: 77.5946 };
 const DEFAULT_ZOOM = 12;
@@ -189,10 +190,7 @@ const Explore = () => {
   const [showFilters, setShowFilters] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: GOOGLE_MAPS_LIBRARIES,
-  });
+  const { isLoaded } = useGoogleMapsLoader();
 
   const { data: voltshareChargers = [], isLoading: vsLoading } = useChargers({
     search,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { GoogleMap, useJsApiLoader, MarkerF, PolylineF, InfoWindowF } from "@react-google-maps/api";
+import { GoogleMap, MarkerF, PolylineF, InfoWindowF } from "@react-google-maps/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -7,7 +7,8 @@ import {
   MapPin, Navigation, Loader2, Zap, Clock, Route, Battery,
   ChevronDown, ChevronUp,
 } from "lucide-react";
-import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES, DARK_MAP_STYLES } from "@/lib/googleMaps";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsLoader";
+import { DARK_MAP_STYLES } from "@/lib/googleMaps";
 
 const containerStyle = { width: "100%", height: "100%" };
 
@@ -156,10 +157,7 @@ const TripPlanner = () => {
   const mapRef = useRef<google.maps.Map | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: GOOGLE_MAPS_LIBRARIES,
-  });
+  const { isLoaded } = useGoogleMapsLoader();
 
   const handleStartSearch = useCallback((val: string) => {
     setStartQuery(val);
