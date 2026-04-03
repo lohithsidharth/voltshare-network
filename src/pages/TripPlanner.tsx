@@ -157,10 +157,7 @@ const TripPlanner = () => {
   const mapRef = useRef<google.maps.Map | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: GOOGLE_MAPS_LIBRARIES,
-  });
+  const { isLoaded } = useGoogleMapsLoader();
 
   const handleStartSearch = useCallback((val: string) => {
     setStartQuery(val);
