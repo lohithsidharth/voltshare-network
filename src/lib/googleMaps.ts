@@ -1,4 +1,4 @@
-export const GOOGLE_MAPS_API_KEY = "AlzaSyDwSUnOPILm0dSqZSP0df7-AB3qTRbGalc";
+export const GOOGLE_MAPS_API_KEY = "AIzaSyDwSUnOPILm0dSqZSP0df7-AB3qTRbGalc";
 
 export const GOOGLE_MAPS_LIBRARIES: ("places" | "geometry" | "drawing")[] = ["places", "geometry"];
 
