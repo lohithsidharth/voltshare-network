@@ -40,7 +40,7 @@ const ChargerDetailPage = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { isLoaded } = useGoogleMapsLoader();
+  
   
   const [charger, setCharger] = useState<ChargerDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
