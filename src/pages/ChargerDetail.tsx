@@ -226,20 +226,22 @@ const ChargerDetailPage = () => {
 
           {/* Location Map */}
           <div className="mt-6 rounded-xl overflow-hidden border border-border h-48">
-            {isLoaded ? (
-              <GoogleMap
-                mapContainerStyle={{ width: "100%", height: "100%" }}
-                center={{ lat: charger.latitude, lng: charger.longitude }}
-                zoom={15}
-                options={{ styles: DARK_MAP_STYLES, disableDefaultUI: true, zoomControl: true }}
-              >
-                <MarkerF position={{ lat: charger.latitude, lng: charger.longitude }} />
-              </GoogleMap>
-            ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            )}
+            <MapContainer
+              center={[charger.latitude, charger.longitude]}
+              zoom={15}
+              className="h-full w-full"
+              zoomControl
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <CircleMarker
+                center={[charger.latitude, charger.longitude]}
+                radius={8}
+                pathOptions={{ color: "#40d88e", fillColor: "#40d88e", fillOpacity: 1 }}
+              />
+            </MapContainer>
           </div>
         </div>
         </div>
