@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES } from "@/lib/googleMaps";
 
-let loaderPromise: Promise<typeof google> | null = null;
+let loaderPromise: Promise<void> | null = null;
 let globalLoaded = false;
 
 function getLoaderPromise() {
@@ -12,7 +12,11 @@ function getLoaderPromise() {
       libraries: GOOGLE_MAPS_LIBRARIES as string[],
       version: "weekly",
     });
-    loaderPromise = loader.load();
+    loaderPromise = loader.importLibrary("maps").then(() => {
+      return loader.importLibrary("places");
+    }).then(() => {
+      return loader.importLibrary("geometry");
+    }).then(() => { /* void */ });
   }
   return loaderPromise;
 }
@@ -24,7 +28,7 @@ export function useGoogleMapsLoader() {
 
   useEffect(() => {
     if (globalLoaded || started.current) {
-      setIsLoaded(true);
+      if (globalLoaded) setIsLoaded(true);
       return;
     }
     started.current = true;
